@@ -22,11 +22,15 @@ function createDb(): Database {
 }
 
 /**
- * Lazy so the empty skeleton can boot (and build) without a database.
- * First query without DATABASE_URL throws.
+ * Real Drizzle instance when DATABASE_URL exists (Auth.js adapter
+ * rejects a Proxy). postgres.js does not connect until the first query,
+ * so this is safe at build time.
  */
-export const db: Database = new Proxy({} as Database, {
-  get(_target, prop, receiver) {
-    return Reflect.get(createDb(), prop, receiver);
-  },
-});
+export const db: Database = env.DATABASE_URL
+  ? createDb()
+  : new Proxy({} as Database, {
+      get() {
+        throw new Error("DATABASE_URL is not set");
+      },
+    });
+

@@ -1,7 +1,6 @@
 import { Landing } from "~/components/landing";
 import { TrackerApp } from "~/components/tracker-app";
 import { env } from "~/env";
-import { auth } from "~/server/auth";
 
 export default async function Home() {
   let signedIn = false;
@@ -9,6 +8,7 @@ export default async function Home() {
 
   if (env.AUTH_SECRET) {
     try {
+      const { auth } = await import("~/server/auth");
       const session = await auth();
       signedIn = Boolean(session?.user);
       email = session?.user.email ?? null;
