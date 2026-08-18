@@ -127,14 +127,28 @@ Monthly dashboard figure = yearly / 12.
 
 ---
 
-## 2026-08-18 — Scaffold is create-t3-app; no app tables yet
+## 2026-08-18 — Scaffold is create-t3-app; Auth.js tables exist, app tables follow SCHEMA.md
 
 **Status:** accepted
 
-**Context:** v1 stack is Next.js App Router, tRPC, Drizzle, Auth.js, Tailwind, shadcn/ui, Vitest, Vercel. The first ship is an empty, deployable skeleton.
+**Context:** v1 stack is Next.js App Router, tRPC, Drizzle, Auth.js, Tailwind, shadcn/ui, Vitest, Vercel.
 
-**Decision:** Initialize from create-t3-app (TypeScript, Drizzle, Auth.js, Tailwind, tRPC, Postgres). Auth.js schema (`user`, `account`, `session`, `verification_token`) lives in Drizzle so the adapter is typed. Do **not** add `subscription` / `notification`, do not `db:push`, do not send mail. Magic-link (Resend) is configured only when `AUTH_RESEND_KEY` and `EMAIL_FROM` are set. Env vars are optional so the site builds without Neon.
+**Decision:** Initialize from create-t3-app. Drizzle holds Auth.js tables plus `subscription` and `notification` as specified in SCHEMA.md. `timezone` and `defaultCurrency` live on `user`. Magic-link (Resend) is configured only when `AUTH_RESEND_KEY` and `EMAIL_FROM` are set.
 
-**Why:** A green Vercel deploy unblocks hosting and secrets. Creating app tables now would lock a schema before the first feature pass.
+**Why:** One schema file matches the product spec. Optional env lets the site boot in preview.
 
-**Consequences:** The home page is static. Cron, Resend, and Drizzle migrations wait. `timezone` / `defaultCurrency` on `user` land with the first auth feature, not in this commit.
+**Consequences:** `db:push` is required before a signed-in account works against Neon. Preview does not push.
+
+---
+
+## 2026-08-18 — Demo is a device-local store; the account DB is opt-in
+
+**Status:** accepted
+
+**Context:** v1 must work without an account. Preview and first-run have no Neon URL. Demo writes must never hit the shared database or send mail.
+
+**Decision:** Signed-out (and any environment without `DATABASE_URL`) uses a `localStorage` document on this device, seeded with realistic subscriptions. tRPC + Drizzle run only when the user is signed in **and** `DATABASE_URL` is set. The hourly cron is a no-op without a database; it never reads demo data.
+
+**Why:** The product has to be playable immediately. A shared demo user would leak edits and could email strangers.
+
+**Consequences:** Clearing site data resets the demo. Signing in does not import the demo list in v1. Reminder emails require Neon + Resend.

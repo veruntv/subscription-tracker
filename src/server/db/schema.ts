@@ -1,11 +1,6 @@
-import { index, pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { index, pgTable, primaryKey, unique } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 
-/**
- * Auth.js adapter tables only. Application tables (subscription, notification)
- * are defined in SCHEMA.md and will be added in a later pass — do not invent
- * them here.
- */
 export const users = pgTable("user", (d) => ({
   id: d
     .varchar({ length: 255 })
@@ -16,6 +11,12 @@ export const users = pgTable("user", (d) => ({
   email: d.varchar({ length: 255 }).notNull(),
   emailVerified: d.timestamp({ mode: "date", withTimezone: true }),
   image: d.varchar({ length: 255 }),
+  timezone: d.varchar({ length: 64 }).notNull().default("UTC"),
+  defaultCurrency: d.char({ length: 3 }).notNull().default("USD"),
+  createdAt: d
+    .timestamp({ withTimezone: true })
+    .notNull()
+    .$defaultFn(() => new Date()),
 }));
 
 export const accounts = pgTable(
@@ -63,4 +64,65 @@ export const verificationTokens = pgTable(
     expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
   }),
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
+);
+
+export const subscriptions = pgTable(
+  "subscription",
+  (d) => ({
+    id: d
+      .uuid()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: d.text().notNull(),
+    amount: d.integer().notNull(),
+    currency: d.char({ length: 3 }).notNull(),
+    cadence: d
+      .text({ enum: ["weekly", "monthly", "quarterly", "yearly"] })
+      .notNull(),
+    intervalCount: d.integer().notNull().default(1),
+    anchorDay: d.integer().notNull(),
+    startedAt: d.timestamp({ withTimezone: true }).notNull(),
+    nextChargeAt: d.timestamp({ withTimezone: true }).notNull(),
+    status: d.text({ enum: ["active", "paused", "canceled"] }).notNull().default("active"),
+    notifyDaysBefore: d.integer().notNull().default(3),
+    category: d.text().notNull(),
+    cancelUrl: d.text(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  }),
+  (t) => [
+    index("subscription_next_charge_at_idx").on(t.nextChargeAt),
+    index("subscription_user_id_idx").on(t.userId),
+  ],
+);
+
+export const notifications = pgTable(
+  "notification",
+  (d) => ({
+    id: d
+      .uuid()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    subscriptionId: d
+      .uuid()
+      .notNull()
+      .references(() => subscriptions.id, { onDelete: "cascade" }),
+    forChargeDate: d.date().notNull(),
+    sentAt: d
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  }),
+  (t) => [
+    unique("notification_subscription_charge_uidx").on(
+      t.subscriptionId,
+      t.forChargeDate,
+    ),
+  ],
 );

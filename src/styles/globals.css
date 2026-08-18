@@ -7,6 +7,8 @@
   --color-muted: #6f685e;
   --color-accent: #b45309;
   --color-border: #e0d4c2;
+  --color-danger: #8f2d2d;
+  --color-ok: #2f5d3a;
   --radius: 0.625rem;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
@@ -40,5 +42,15 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

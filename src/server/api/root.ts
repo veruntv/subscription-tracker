@@ -1,8 +1,12 @@
 import { healthRouter } from "~/server/api/routers/health";
+import { settingsRouter } from "~/server/api/routers/settings";
+import { subscriptionRouter } from "~/server/api/routers/subscription";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 export const appRouter = createTRPCRouter({
   health: healthRouter,
+  subscription: subscriptionRouter,
+  settings: settingsRouter,
 });
 
 export type AppRouter = typeof appRouter;
