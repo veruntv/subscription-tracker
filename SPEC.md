@@ -9,7 +9,7 @@ Web application for tracking recurring charges (Netflix, gym, hosting). A user k
 - One place to see every recurring charge
 - No surprise deductions — upcoming payments are obvious, and a reminder email goes out in time
 - Honest monthly and yearly totals, including a category breakdown
-- Usable immediately via a seeded demo, without creating an account
+- A public landing page for people who are not signed in
 
 ## Non-goals
 
@@ -80,13 +80,11 @@ Charge dates on the calendar use the same schedule rules as `nextChargeAt` (incl
 
 Email contains: subscription name, amount + currency, charge date, and the cancel URL when present. Provider: Resend.
 
-### Demo mode
+### Marketing landing
 
-- Available with no account
-- Seeded with a realistic set of subscriptions (streaming, gym, hosting, and similar)
-- Same dashboard, calendar, and CRUD UX as the signed-in app
-- Demo writes stay local to the session (or an equivalent isolated store). They must not land in the shared database and must never trigger real emails
-- A clear, persistent cue that this is a demo, plus a path to sign in and keep a real list
+- The signed-out home is a product page: what it is, how it works, Sign in / Create account
+- There is no seeded demo and no device-local list
+- Sign up and sign in are the same magic-link flow
 
 ### Auth (v1)
 
@@ -122,6 +120,6 @@ Email contains: subscription name, amount + currency, charge date, and the cance
 - Calendar shows the next month of charges, including 31st-anchor collapse
 - A user with timezone `Europe/Chisinau` and `notifyDaysBefore = 3` gets one email at local 09:00, three days before the charge
 - Retrying the cron does not send a second email for the same `(subscription, charge date)`
-- Demo works signed-out, with seed data, and sends no mail
+- Signed-out visitors see the landing page; the tracker is only after sign-in
 - Layout is designed for a desktop browser (dashboard + calendar side by side is fine). A narrow window may be usable, but it is not a target
 - Web only — no native shell required to complete any v1 flow

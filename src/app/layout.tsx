@@ -1,7 +1,7 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Geist, Newsreader } from "next/font/google";
+import { Geist } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { PreviewHostBridge } from "~/components/preview-host-bridge";
@@ -25,20 +25,11 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
-  display: "swap",
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${geist.variable} ${newsreader.variable} antialiased`}
-    >
+    <html lang="en" className={`${geist.variable} antialiased`}>
       <body>
         <PreviewHostBridge />
         <TRPCReactProvider>{children}</TRPCReactProvider>

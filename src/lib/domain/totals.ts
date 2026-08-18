@@ -1,4 +1,4 @@
-import { monthlyMinor, mulDivRound, yearlyMinor } from "~/lib/domain/money";
+import { mulDivRound, yearlyMinor } from "~/lib/domain/money";
 import type { Category, Subscription } from "~/lib/domain/types";
 
 export type CurrencyTotals = {
@@ -9,6 +9,13 @@ export type CurrencyTotals = {
 
 export type CategoryTotals = CurrencyTotals & {
   category: Category;
+};
+
+export type MixSegment = {
+  key: string;
+  category: Category | "remainder";
+  monthly: number;
+  yearly: number;
 };
 
 export function activeSubscriptions(items: readonly Subscription[]): Subscription[] {
@@ -51,9 +58,37 @@ export function totalsByCategory(items: readonly Subscription[]): CategoryTotals
     .sort((a, b) => b.yearly - a.yearly);
 }
 
+export function categoryMix(
+  rows: readonly CategoryTotals[],
+  currency: string,
+  namedLimit = 3,
+): MixSegment[] {
+  const ofCurrency = rows.filter((row) => row.currency === currency);
+  const showAll = ofCurrency.length <= namedLimit + 1;
+  const named = showAll ? ofCurrency : ofCurrency.slice(0, namedLimit);
+  const tail = showAll ? [] : ofCurrency.slice(namedLimit);
+  const restYearly = tail.reduce((sum, row) => sum + row.yearly, 0);
+  const restMonthly = tail.reduce((sum, row) => sum + row.monthly, 0);
+  const segments: MixSegment[] = named.map((row) => ({
+    key: `${row.category}:${row.currency}`,
+    category: row.category,
+    monthly: row.monthly,
+    yearly: row.yearly,
+  }));
+  if (restYearly > 0) {
+    segments.push({
+      key: `remainder:${currency}`,
+      category: "remainder",
+      monthly: restMonthly,
+      yearly: restYearly,
+    });
+  }
+  return segments;
+}
+
 export function upcomingCharges(
   items: readonly Subscription[],
-  limit = 6,
+  limit = 8,
 ): Subscription[] {
   return activeSubscriptions(items)
     .slice()

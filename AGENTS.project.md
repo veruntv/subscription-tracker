@@ -1,6 +1,6 @@
 # Subscription Tracker
 
-Web app for tracking recurring charges: list, dashboard (month / year / categories), month-forward calendar, reminder email N days before a charge. Demo mode works without an account.
+Web app for tracking recurring charges: list, dashboard (month / year / categories), month-forward calendar, reminder email N days before a charge. Signed-out visitors see a marketing landing. The tracker requires an account.
 
 **v1 is web only, desktop-primary.** No native apps. Do not design mobile-first.
 

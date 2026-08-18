@@ -152,3 +152,115 @@ Monthly dashboard figure = yearly / 12.
 **Why:** The product has to be playable immediately. A shared demo user would leak edits and could email strangers.
 
 **Consequences:** Clearing site data resets the demo. Signing in does not import the demo list in v1. Reminder emails require Neon + Resend.
+
+---
+
+## 2026-08-18 — Finance UI: Ramp lime on forest and bone
+
+**Status:** accepted
+
+**Context:** Editorial paper/copper was dropped. The user asked for a finance-tracker look, then specifically Ramp’s lime.
+
+**Decision:** Geist, desktop-first sidebar. Accent `#d6f24c`. Sidebar `#13241c`. Canvas `#f3f2ea`. Category marks and bars stay olive/charcoal. Lime is the only saturated color.
+
+**Why:** [Ramp vs Mercury](https://mobbin.com/sites/sections/d5541dd9-5262-4788-aeda-0851057f2a4b) already pairs lime with deep green and warm off-white. Rainbow chips fight the accent.
+
+**Consequences:** Do not bring back Newsreader, copper, teal, or a rainbow without a new decision.
+
+---
+
+## 2026-08-18 — Calendar cells name the charge; last row is padded
+
+**Status:** accepted
+
+**Context:** Day 31 stretched across the last row. Cells showed sums with no names.
+
+**Decision:** Pad the month grid with trailing blank cells so every row has seven tracks. Each charged day lists subscription names and amounts; two names stay stacked, a shared total only if more than one.
+
+**Why:** A lone 31st must stay one-seventh of the row. The calendar has to answer “what is this,” not just “how much.”
+
+**Consequences:** Do not drop the trailing blanks to “tighten” the last week.
+
+---
+
+## 2026-08-18 — Spend headline shows mix, not a second stat row
+
+**Status:** accepted
+
+**Context:** The monthly card had a dead lower half. Year and active count repeated the rest of the page. User picked variant B from the lavish comparison.
+
+**Decision:** Keep the monthly total as the only hero. Fill the card with a stacked olive bar of this currency’s categories (top three named, tail folded into remainder if more than four). Year, active count, and other currencies sit on one caption line.
+
+**Why:** “73 EUR” is abstract until you see it is mostly gym + streaming + hosting. Upcoming already owns the next charge; this card owns composition.
+
+**Consequences:** The “By category” list stays as the full breakdown. Do not add a sparkline or vs-last-month here — v1 has no history.
+
+---
+
+## 2026-08-18 — Acid-on-charcoal palette, lime as accent only
+
+**Status:** accepted (supersedes forest/olive supporting colors)
+
+**Context:** The user picked a five-swatch palette: lime `#D6F24C`, ink `#0F1115`, charcoal `#1B1F26`, gray `#8A9099`, paper `#F2F4F0`. Olive category marks and the mix bar felt off. Lime should stay scarce.
+
+**Decision:** Semantic tokens map onto those five colors. Canvas is paper, sidebar and type are ink, cards lift to white. Merchant marks are charcoal, not category-colored. Mix and category bars step through ink / charcoal / gray. Lime is reserved for the primary button (and focus rings). Demo chip, today cell, and status pills stay in the neutrals.
+
+**Why:** The named palette is already a complete system. Extra hues on icons and the mix bar competed with the accent.
+
+**Consequences:** Do not reintroduce olive, forest, or a category rainbow. Do not flood lime into chips and bars.
+
+---
+
+## 2026-08-18 — Brighter lime + grape + thistle palette
+
+**Status:** accepted (supersedes acid-on-charcoal neutrals)
+
+**Context:** Charcoal marks and mix segments were too close in value. The user asked for a brighter palette and for today vs charge days to read apart.
+
+**Decision:** Tokens are lime `#D6F24C`, grape `#44355B`, thistle `#DDC4DD`, ink `#221E22`, lilac `#DCCFEC`. Canvas is lilac, sidebar is grape, cards are pale paper. Mix bars and merchant marks cycle grape / thistle / ink so adjacent segments contrast. Lime stays on the primary button and today’s date chip. Charge days use a thistle fill; today uses a lime wash plus a lime disc.
+
+**Why:** The previous gray scale hid the breakdown. These five hues already contrast without adding a sixth.
+
+**Consequences:** Do not flatten marks back to one charcoal. Keep today and charge days on different hues.
+
+---
+
+## 2026-08-18 — Pale canvas, vivid orange / grape / teal marks
+
+**Status:** accepted
+
+**Context:** Lilac `#DCCFEC` as the page was too loud. Mix and icons needed brighter, clearly different hues that still sit together.
+
+**Decision:** Canvas is washed lilac `#F4EFF7`. Mix bars and merchant marks cycle orange `#FF7A33`, grape `#44355B`, teal `#12B5A0`. Lime stays the action accent. Charge-day fill is pale thistle `#EDE4F0`.
+
+**Why:** Orange and teal are complements; grape ties them to the sidebar. A pale page lets those three read as color, not as the room.
+
+**Consequences:** Do not put the loud lilac back on the page. Do not flatten marks to one hue.
+
+---
+
+## 2026-08-18 — Sidebar items are tabs, not in-page anchors
+
+**Status:** accepted
+
+**Context:** Overview, Calendar, and Subscriptions were three stacked sections on one scroll. The user asked to switch them as tabs.
+
+**Decision:** Those three sidebar items set a `tab` state and a `#overview` / `#calendar` / `#list` hash. Only the active pane renders. Add subscription stays on every pane.
+
+**Why:** Each pane is a different job. Scrolling past a dashboard to reach the table made the sidebar lie.
+
+**Consequences:** Do not put all three panes back on one scrolling page without a new decision.
+
+---
+
+## 2026-08-18 — No demo; signed-out home is a landing page
+
+**Status:** accepted (supersedes device-local demo)
+
+**Context:** The user does not want a seeded playground. First visit should sell the product and send people to sign in / sign up.
+
+**Decision:** `/` is a marketing page when there is no session. The tracker mounts only after sign-in. Sign up and sign in share the magic-link form. Demo localStorage is no longer loaded.
+
+**Why:** A demo list that dies on another device is the wrong first impression. An account is the product.
+
+**Consequences:** Preview without auth shows the landing, not a fake list. Do not resurrect a seeded demo without a new decision.

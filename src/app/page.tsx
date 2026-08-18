@@ -1,3 +1,4 @@
+import { Landing } from "~/components/landing";
 import { TrackerApp } from "~/components/tracker-app";
 import { env } from "~/env";
 import { auth } from "~/server/auth";
@@ -16,10 +17,14 @@ export default async function Home() {
     }
   }
 
+  if (!signedIn) {
+    return <Landing />;
+  }
+
   return (
     <TrackerApp
-      accountReady={signedIn && Boolean(env.DATABASE_URL)}
-      signedIn={signedIn}
+      accountReady={Boolean(env.DATABASE_URL)}
+      signedIn
       email={email}
       magicLinkReady={Boolean(env.AUTH_RESEND_KEY && env.EMAIL_FROM)}
     />

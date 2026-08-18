@@ -1,21 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #f3eee4;
-  --color-surface: #fffaf2;
-  --color-fg: #1c1915;
-  --color-muted: #6f685e;
-  --color-accent: #b45309;
-  --color-border: #e0d4c2;
-  --color-danger: #8f2d2d;
-  --color-ok: #2f5d3a;
-  --radius: 0.625rem;
+  --color-accent: #d6f24c;
+  --color-grape: #44355b;
+  --color-thistle: #ede4f0;
+  --color-ink: #221e22;
+  --color-lilac: #f4eff7;
+  --color-orange: #ff7a33;
+  --color-teal: #12b5a0;
+  --color-bg: #f4eff7;
+  --color-surface: #ffffff;
+  --color-sidebar: #44355b;
+  --color-sidebar-muted: #d5c6de;
+  --color-fg: #221e22;
+  --color-muted: #6b5d78;
+  --color-paper: #ffffff;
+  --color-charcoal: #221e22;
+  --color-gray: #6b5d78;
+  --color-accent-soft: color-mix(in srgb, #d6f24c 32%, #ffffff);
+  --color-charge: #ede4f0;
+  --color-border: color-mix(in srgb, #44355b 10%, #ffffff);
+  --color-danger: #8f3d2c;
+  --color-ok: #44355b;
+  --radius: 0.875rem;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --shadow-border:
-    0px 0px 0px 1px rgb(28 25 21 / 0.06),
-    0px 1px 2px -1px rgb(28 25 21 / 0.06),
-    0px 2px 4px 0px rgb(28 25 21 / 0.04);
+    0px 0px 0px 1px rgb(68 53 91 / 0.1),
+    0px 1px 2px rgb(34 30 34 / 0.05);
 }
 
 @layer base {

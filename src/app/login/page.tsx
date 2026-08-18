@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 
 import { Button } from "~/components/ui/button";
@@ -9,6 +10,16 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const intent = useSearchParams().get("intent");
+  const signup = intent === "signup";
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -24,31 +35,29 @@ export default function LoginPage() {
       });
       if (result?.error) {
         setStatus("error");
-        setMessage(
-          "Magic link is not configured yet. Use the demo from the home page — it needs no account.",
-        );
+        setMessage("Magic link is not configured yet. Come back once mail is connected.");
         return;
       }
       setStatus("sent");
       setMessage("Check your inbox for the sign-in link.");
     } catch {
       setStatus("error");
-      setMessage(
-        "Could not send a link. The demo on the home page works without signing in.",
-      );
+      setMessage("Could not send a link. Try again in a moment.");
     }
   };
 
   return (
     <main className="min-h-screen bg-bg text-fg">
       <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-10">
-        <p className="text-xs font-medium uppercase tracking-[0.16em] text-accent">
-          Account
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">
+          {signup ? "Get started" : "Account"}
         </p>
-        <h1 className="mt-3 font-display text-4xl tracking-tight">Sign in</h1>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+          {signup ? "Create an account" : "Sign in"}
+        </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">
-          We email a one-time link. Until mail is connected, stay in the demo —
-          your list already works on this device.
+          We email a one-time link. Same inbox flow for a first visit and a
+          return. No password to remember.
         </p>
         <div className="mt-8 space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -70,7 +79,7 @@ export default function LoginPage() {
             {status === "sending" ? "Sending…" : "Email me a link"}
           </Button>
           <Button asChild variant="ghost">
-            <Link href="/">Back to the tracker</Link>
+            <Link href="/">Back</Link>
           </Button>
         </div>
       </div>
