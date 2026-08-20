@@ -1,11 +1,12 @@
-import { todayUtcCivil } from "~/lib/domain/civil-date";
+import { compareCivil, todayUtcCivil } from "~/lib/domain/civil-date";
 import { inferAnchorDay, nextChargeOnOrAfter } from "~/lib/domain/schedule";
-import type { Subscription, SubscriptionInput } from "~/lib/domain/types";
+import type { CivilDate, Subscription, SubscriptionInput } from "~/lib/domain/types";
 
 export function buildSubscription(
   input: SubscriptionInput,
   id: string,
   createdAt = new Date().toISOString(),
+  from: CivilDate = todayUtcCivil(),
 ): Subscription {
   const anchorDay = inferAnchorDay(input.startedAt, input.cadence);
   return {
@@ -22,7 +23,7 @@ export function buildSubscription(
       cadence: input.cadence,
       intervalCount: input.intervalCount,
       anchorDay,
-      from: todayUtcCivil(),
+      from,
     }),
     status: input.status ?? "active",
     notifyDaysBefore: Math.max(0, input.notifyDaysBefore),
@@ -32,7 +33,26 @@ export function buildSubscription(
   };
 }
 
-export function applyStatus(item: Subscription, status: Subscription["status"]): Subscription {
+export function rollNextChargeIfPast(item: Subscription, today: CivilDate): Subscription {
+  if (item.status !== "active") return item;
+  if (compareCivil(item.nextChargeAt, today) >= 0) return item;
+  return {
+    ...item,
+    nextChargeAt: nextChargeOnOrAfter({
+      startedAt: item.startedAt,
+      cadence: item.cadence,
+      intervalCount: item.intervalCount,
+      anchorDay: item.anchorDay,
+      from: today,
+    }),
+  };
+}
+
+export function applyStatus(
+  item: Subscription,
+  status: Subscription["status"],
+  from: CivilDate = todayUtcCivil(),
+): Subscription {
   if (status === "active") {
     return buildSubscription(
       {
@@ -49,6 +69,7 @@ export function applyStatus(item: Subscription, status: Subscription["status"]):
       },
       item.id,
       item.createdAt,
+      from,
     );
   }
   return { ...item, status };

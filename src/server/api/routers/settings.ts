@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { CURRENCIES, TIMEZONES } from "~/lib/domain/labels";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { users } from "~/server/db/schema";
 
@@ -25,8 +26,8 @@ export const settingsRouter = createTRPCRouter({
   update: protectedProcedure
     .input(
       z.object({
-        timezone: z.string().min(1).max(64),
-        defaultCurrency: z.string().length(3),
+        timezone: z.enum(TIMEZONES),
+        defaultCurrency: z.enum(CURRENCIES),
       }),
     )
     .mutation(async ({ ctx, input }) => {

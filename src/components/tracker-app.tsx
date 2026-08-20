@@ -19,7 +19,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select } from "~/components/ui/select";
-import { civilFromIso, formatCivil, todayUtcCivil } from "~/lib/domain/civil-date";
+import { civilFromIso, compareCivil, formatCivil, todayInZone } from "~/lib/domain/civil-date";
 import {
   CADENCE_LABELS,
   CATEGORY_LABELS,
@@ -59,9 +59,12 @@ function tabFromHash(): Tab {
   return TABS.some((tab) => tab.id === hash) ? (hash as Tab) : "overview";
 }
 
-function localYearMonth(): { year: number; month: number } {
-  const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+function suggestedTimezone(): (typeof TIMEZONES)[number] {
+  const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if ((TIMEZONES as readonly string[]).includes(detected)) {
+    return detected as (typeof TIMEZONES)[number];
+  }
+  return "Europe/Chisinau";
 }
 
 export function TrackerApp({
@@ -73,8 +76,7 @@ export function TrackerApp({
   email: string | null;
   magicLinkReady?: boolean;
 }) {
-  const today = todayUtcCivil();
-  const [month, setMonth] = useState({ year: today.year, month: today.month });
+  const [month, setMonth] = useState<{ year: number; month: number } | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -83,7 +85,6 @@ export function TrackerApp({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [hour] = useState(() => new Date().getHours());
   const [tab, setTab] = useState<Tab>("overview");
-  const thisMonth = useMemo(() => localYearMonth(), []);
 
   useEffect(() => {
     setTab(tabFromHash());
@@ -121,10 +122,18 @@ export function TrackerApp({
     enabled: accountReady,
   });
   const createMut = api.subscription.create.useMutation({
-    onSuccess: () => void listQuery.refetch(),
+    onSuccess: () => {
+      void listQuery.refetch();
+      setDialogOpen(false);
+      setEditing(null);
+    },
   });
   const updateMut = api.subscription.update.useMutation({
-    onSuccess: () => void listQuery.refetch(),
+    onSuccess: () => {
+      void listQuery.refetch();
+      setDialogOpen(false);
+      setEditing(null);
+    },
   });
   const statusMut = api.subscription.setStatus.useMutation({
     onSuccess: () => void listQuery.refetch(),
@@ -133,7 +142,10 @@ export function TrackerApp({
     onSuccess: () => void listQuery.refetch(),
   });
   const settingsMut = api.settings.update.useMutation({
-    onSuccess: () => void settingsQuery.refetch(),
+    onSuccess: () => {
+      void settingsQuery.refetch();
+      setSettingsOpen(false);
+    },
   });
   const fxQuery = api.fx.today.useQuery(undefined, {
     enabled: accountReady,
@@ -146,6 +158,13 @@ export function TrackerApp({
     timezone: settingsQuery.data?.timezone ?? "UTC",
     defaultCurrency: settingsQuery.data?.defaultCurrency ?? "USD",
   };
+  const needsOnboarding =
+    Boolean(settingsQuery.data) &&
+    settingsQuery.data?.timezone === "UTC" &&
+    settingsQuery.data?.defaultCurrency === "USD";
+  const today = todayInZone(settings.timezone);
+  const thisMonth = { year: today.year, month: today.month };
+  const calendarMonth = month ?? thisMonth;
   const target = settings.defaultCurrency;
   const fx = fxQuery.data ?? null;
   const usedCurrencies = useMemo(
@@ -209,12 +228,16 @@ export function TrackerApp({
     return categoryMix(categoryRows, currency).filter((row) => row.monthly > 0);
   }, [categoryRows, primaryMonth?.currency, primaryYear?.currency]);
   const mixTotal = mix.reduce((sum, row) => sum + row.monthly, 0);
-  const mixLabels = mix.filter((row) => row.category !== "remainder").slice(0, 3);
+  const mixLabels = mix;
   const fxAsOf = fx ? civilFromIso(fx.asOf) : null;
   const activeCount = items.filter((item) => item.status === "active").length;
-  const filtered = items.filter((item) =>
-    item.name.toLowerCase().includes(query.trim().toLowerCase()),
-  );
+  const filtered = items
+    .filter((item) => item.name.toLowerCase().includes(query.trim().toLowerCase()))
+    .slice()
+    .sort(
+      (a, b) =>
+        compareCivil(a.nextChargeAt, b.nextChargeAt) || a.name.localeCompare(b.name),
+    );
 
   const openCreate = () => {
     setEditing(null);
@@ -222,15 +245,12 @@ export function TrackerApp({
   };
 
   const save = (input: SubscriptionInput) => {
-    if (accountReady) {
-      if (editing) {
-        updateMut.mutate({ ...input, id: editing.id });
-      } else {
-        createMut.mutate(input);
-      }
+    if (!accountReady) return;
+    if (editing) {
+      updateMut.mutate({ ...input, id: editing.id });
+    } else {
+      createMut.mutate(input);
     }
-    setDialogOpen(false);
-    setEditing(null);
   };
 
   const setStatus = (id: string, status: Subscription["status"]) => {
@@ -240,19 +260,24 @@ export function TrackerApp({
     }
   };
 
-  const remove = (id: string) => {
+  const remove = (id: string, name: string) => {
     setMenuId(null);
-    if (accountReady) {
-      removeMut.mutate({ id });
-    }
+    if (!accountReady) return;
+    if (!window.confirm(`Remove ${name} from the list? This cannot be undone.`)) return;
+    removeMut.mutate({ id });
   };
 
   const saveSettings = (next: UserSettings) => {
-    if (accountReady) {
-      settingsMut.mutate(next);
-    }
-    setSettingsOpen(false);
+    if (!accountReady) return;
+    settingsMut.mutate({
+      timezone: next.timezone as (typeof TIMEZONES)[number],
+      defaultCurrency: next.defaultCurrency as (typeof CURRENCIES)[number],
+    });
   };
+
+  useEffect(() => {
+    if (needsOnboarding) setSettingsOpen(true);
+  }, [needsOnboarding]);
 
   return (
     <div className="flex min-h-screen bg-bg text-fg">
@@ -311,6 +336,15 @@ export function TrackerApp({
           </Button>
         </header>
 
+        {listQuery.isLoading ? (
+          <p className="mt-6 text-sm text-muted">Loading your list…</p>
+        ) : null}
+        {listQuery.isError ? (
+          <p role="alert" className="mt-6 text-sm text-danger">
+            Could not load subscriptions. Try again in a moment.
+          </p>
+        ) : null}
+
         {tab === "overview" ? (
         <section className="mt-6 grid grid-cols-12 gap-5">
           <article className="col-span-6 rounded-2xl bg-surface p-7 shadow-border">
@@ -334,35 +368,33 @@ export function TrackerApp({
                       ? formatMinor(primaryYear.yearly, primaryYear.currency)
                       : "—"}
                 </p>
-                {yearlyConverted && foreign && fxAsOf ? (
-                  <>
-                    <p className="mt-1 text-xs text-muted">
-                      Converted to {target} at {formatCivil(fxAsOf)} rates
-                    </p>
-                    {yearlyTotals.length > 1 ? (
-                      <p className="mt-0.5 text-xs tabular-nums text-muted">
-                        {yearlyTotals
-                          .map((row) => `${formatMinor(row.yearly, row.currency)} / yr`)
-                          .join(" · ")}
-                      </p>
-                    ) : null}
-                  </>
-                ) : yearlyTotals.length > 1 ? (
-                  <p className="mt-1 text-xs tabular-nums text-muted">
-                    {yearlyTotals
-                      .filter((row) => row.currency !== primaryYear?.currency)
-                      .map((row) => `${formatMinor(row.yearly, row.currency)} / yr`)
-                      .join(" · ")}
-                  </p>
-                ) : foreign && !canConvert ? (
-                  <p className="mt-1 text-xs text-muted">
-                    Could not load exchange rates — totals are per currency
-                  </p>
-                ) : null}
               </div>
             </div>
-            {awaitingFx ? (
-              <p className="mt-6 text-sm text-muted">Converting this month mix...</p>
+            <p className="mt-4 text-xs leading-relaxed text-muted">
+              This month is invoices that land in this calendar month. Per year is the
+              typical 12-month run-rate, not this month × 12.
+            </p>
+            {yearlyConverted && foreign && fxAsOf ? (
+              <p className="mt-1 text-xs text-muted">
+                Both figures converted to {target} at {formatCivil(fxAsOf)} rates. Rows stay
+                in the currency you entered.
+              </p>
+            ) : yearlyTotals.length > 1 ? (
+              <p className="mt-1 text-xs tabular-nums text-muted">
+                {yearlyTotals
+                  .filter((row) => row.currency !== primaryYear?.currency)
+                  .map((row) => `${formatMinor(row.yearly, row.currency)} / yr`)
+                  .join(" · ")}
+              </p>
+            ) : foreign && !canConvert ? (
+              <p className="mt-1 text-xs text-muted">
+                Could not load exchange rates — totals are per currency
+              </p>
+            ) : null}
+            {listQuery.isLoading || awaitingFx ? (
+              <p className="mt-6 text-sm text-muted">
+                {listQuery.isLoading ? "Loading your list…" : "Converting this month mix..."}
+              </p>
             ) : mix.length > 0 ? (
               <>
                 <div className="mt-6 flex h-2.5 gap-1 overflow-hidden rounded-full">
@@ -402,7 +434,9 @@ export function TrackerApp({
           <article className="col-span-6 rounded-2xl bg-surface p-6 shadow-border">
             <p className="text-sm font-medium">Upcoming</p>
             <ul className="mt-4 space-y-3">
-              {upcoming.length === 0 ? (
+              {listQuery.isLoading ? (
+                <li className="text-sm text-muted">Loading your list…</li>
+              ) : upcoming.length === 0 ? (
                 <li className="text-sm text-muted">Nothing due soon.</li>
               ) : (
                 upcoming.map((item) => (
@@ -426,14 +460,16 @@ export function TrackerApp({
           <article className="col-span-12 rounded-2xl bg-surface p-6 shadow-border">
             <p className="text-sm font-medium">By category</p>
             <ul className="mt-4 grid grid-cols-2 gap-x-10 gap-y-3">
-              {awaitingFx ? (
-                <li className="text-sm text-muted">Converting category totals…</li>
+              {listQuery.isLoading || awaitingFx ? (
+                <li className="text-sm text-muted">
+                  {listQuery.isLoading ? "Loading your list…" : "Converting category totals…"}
+                </li>
               ) : categoryRows.length === 0 ? (
                 <li className="text-sm text-muted">No active subscriptions.</li>
               ) : (
                 categoryRows.map((row) => {
-                  const share =
-                    primaryYear && primaryYear.yearly > 0 ? row.yearly / primaryYear.yearly : 0;
+                  const monthTotal = primaryMonth?.monthly ?? 0;
+                  const share = monthTotal > 0 ? row.monthly / monthTotal : 0;
                   return (
                     <li key={`${row.category}-${row.currency}`} className="space-y-1.5">
                       <div className="flex items-center justify-between gap-3 text-sm">
@@ -465,12 +501,22 @@ export function TrackerApp({
         {tab === "calendar" ? (
         <div className="mt-6">
           <MonthCalendar
-            year={month.year}
-            month={month.month}
+            year={calendarMonth.year}
+            month={calendarMonth.month}
             today={today}
             items={items}
-            onPrev={() => setMonth((current) => shiftMonth(current.year, current.month, -1))}
-            onNext={() => setMonth((current) => shiftMonth(current.year, current.month, 1))}
+            onPrev={() =>
+              setMonth((current) => {
+                const from = current ?? thisMonth;
+                return shiftMonth(from.year, from.month, -1);
+              })
+            }
+            onNext={() =>
+              setMonth((current) => {
+                const from = current ?? thisMonth;
+                return shiftMonth(from.year, from.month, 1);
+              })
+            }
           />
         </div>
         ) : null}
@@ -502,6 +548,21 @@ export function TrackerApp({
                 </tr>
               </thead>
               <tbody>
+                {listQuery.isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-sm text-muted">
+                      Loading your list…
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-sm text-muted">
+                      {query.trim()
+                        ? "No matching subscriptions."
+                        : "Add the first charge with the button above."}
+                    </td>
+                  </tr>
+                ) : null}
                 {filtered.map((item, index) => (
                   <tr key={item.id} className="border-t border-border">
                     <td className="px-4 py-3">
@@ -583,7 +644,7 @@ export function TrackerApp({
                                 Manage page
                               </a>
                             ) : null}
-                            <MenuItem label="Delete" onClick={() => remove(item.id)} />
+                            <MenuItem label="Delete" onClick={() => remove(item.id, item.name)} />
                           </div>
                         ) : null}
                       </div>
@@ -601,17 +662,33 @@ export function TrackerApp({
         open={dialogOpen}
         initial={editing}
         defaultCurrency={settings.defaultCurrency}
+        pending={createMut.isPending || updateMut.isPending}
+        error={
+          createMut.error || updateMut.error
+            ? "Could not save. Check the fields and try again."
+            : null
+        }
         onClose={() => {
+          if (createMut.isPending || updateMut.isPending) return;
           setDialogOpen(false);
           setEditing(null);
+          createMut.reset();
+          updateMut.reset();
         }}
         onSubmit={save}
       />
 
       {settingsOpen ? (
         <SettingsDialog
-          settings={settings}
-          onClose={() => setSettingsOpen(false)}
+          settings={
+            needsOnboarding
+              ? { timezone: suggestedTimezone(), defaultCurrency: settings.defaultCurrency }
+              : settings
+          }
+          required={needsOnboarding}
+          onClose={() => {
+            if (!needsOnboarding) setSettingsOpen(false);
+          }}
           onSave={saveSettings}
         />
       ) : null}
@@ -662,10 +739,12 @@ function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
 
 function SettingsDialog({
   settings,
+  required = false,
   onClose,
   onSave,
 }: {
   settings: UserSettings;
+  required?: boolean;
   onClose: () => void;
   onSave: (settings: UserSettings) => void;
 }) {
@@ -674,8 +753,15 @@ function SettingsDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-8">
-      <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-border">
-        <h2 className="text-xl font-semibold tracking-tight">Settings</h2>
+      <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-border">
+        <h2 id="settings-title" className="text-xl font-semibold tracking-tight">
+          {required ? "Timezone and currency" : "Settings"}
+        </h2>
+        {required ? (
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Reminders go out at 09:00 in this zone. Totals convert into this currency.
+          </p>
+        ) : null}
         <div className="mt-5 space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="timezone">Timezone</Label>
@@ -707,9 +793,11 @@ function SettingsDialog({
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
-            Close
-          </Button>
+          {required ? null : (
+            <Button variant="ghost" onClick={onClose}>
+              Close
+            </Button>
+          )}
           <Button onClick={() => onSave({ timezone, defaultCurrency })}>Save</Button>
         </div>
       </div>

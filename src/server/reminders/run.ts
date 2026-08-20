@@ -1,12 +1,13 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { env } from "~/env";
-import { civilFromUtc, civilToIso } from "~/lib/domain/civil-date";
+import { civilToIso, compareCivil, todayInZone } from "~/lib/domain/civil-date";
 import { formatMinor } from "~/lib/domain/money";
-import { isDueThisHour, reminderIdempotencyKey } from "~/lib/domain/reminders";
+import { isDueThisHour, isUniqueViolation, reminderIdempotencyKey } from "~/lib/domain/reminders";
+import { rollNextChargeIfPast } from "~/lib/domain/subscription";
 import { db } from "~/server/db";
 import { notifications, subscriptions, users } from "~/server/db/schema";
-import { rowToSubscription } from "~/server/subscriptions/map";
+import { civilToTimestamp, rowToSubscription } from "~/server/subscriptions/map";
 
 export async function runReminders(now = new Date()): Promise<{
   considered: number;
@@ -52,33 +53,54 @@ export async function runReminders(now = new Date()): Promise<{
         subscriptionId: key.subscriptionId,
         forChargeDate: key.forChargeDate,
       });
-    } catch {
-      skipped += 1;
-      continue;
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        skipped += 1;
+        continue;
+      }
+      throw error;
     }
 
     if (env.AUTH_RESEND_KEY && env.EMAIL_FROM && row.email) {
-      const chargeDate = civilToIso(civilFromUtc(row.subscription.nextChargeAt));
-      const amount = formatMinor(subscription.amount, subscription.currency);
-      const cancel = subscription.cancelUrl
-        ? `\nManage / cancel: ${subscription.cancelUrl}`
-        : "";
-      await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.AUTH_RESEND_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: env.EMAIL_FROM,
-          to: [row.email],
-          subject: `${subscription.name} charges in ${subscription.notifyDaysBefore} day(s)`,
-          text: `${subscription.name} · ${amount} on ${chargeDate}.${cancel}`,
-        }),
-      });
+      try {
+        const chargeDate = civilToIso(subscription.nextChargeAt);
+        const amount = formatMinor(subscription.amount, subscription.currency);
+        const cancel = subscription.cancelUrl
+          ? `\nManage / cancel: ${subscription.cancelUrl}`
+          : "";
+        const response = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.AUTH_RESEND_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: env.EMAIL_FROM,
+            to: [row.email],
+            subject: `${subscription.name} charges in ${subscription.notifyDaysBefore} day(s)`,
+            text: `${subscription.name} · ${amount} on ${chargeDate}.${cancel}`,
+          }),
+        });
+        if (!response.ok) {
+          console.error("Resend rejected reminder", response.status, subscription.id);
+        }
+      } catch (error) {
+        console.error("Resend failed for reminder", subscription.id, error);
+      }
     }
 
     sent += 1;
+  }
+
+  for (const row of rows) {
+    const subscription = rowToSubscription(row.subscription);
+    const today = todayInZone(row.timezone, now);
+    const rolled = rollNextChargeIfPast(subscription, today);
+    if (compareCivil(rolled.nextChargeAt, subscription.nextChargeAt) === 0) continue;
+    await db
+      .update(subscriptions)
+      .set({ nextChargeAt: civilToTimestamp(rolled.nextChargeAt) })
+      .where(eq(subscriptions.id, subscription.id));
   }
 
   return { considered: rows.length, sent, skipped };

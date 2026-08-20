@@ -38,6 +38,20 @@ export function todayUtcCivil(): CivilDate {
   return civilFromUtc(new Date());
 }
 
+export function todayInZone(timeZone: string, now = new Date()): CivilDate {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+  if (!year || !month || !day) return todayUtcCivil();
+  return { year, month, day };
+}
+
 export function compareCivil(a: CivilDate, b: CivilDate): number {
   return a.year - b.year || a.month - b.month || a.day - b.day;
 }
