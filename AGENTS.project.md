@@ -58,6 +58,8 @@ All: Not available during build, Available in the container, then Restart.
 
 Keep DATABASE_URL off during build (Auth.js "Unsupported database type (object)").
 
+Local Postgres (this Windows machine): portable 18.6 in `%USERPROFILE%\pgsql`, database `subscription_tracker`, no SSL. Recipe and env: [LOCAL.md](./LOCAL.md). `npm run db:up` then `npm run dev`. Do not point local `.env` at Coolify `tracker-db`.
+
 Tables already pushed: npx drizzle-kit push --force in the application Terminal.
 
 \## Code map

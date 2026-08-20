@@ -1,6 +1,6 @@
 # Handoff — Subscription Tracker
 
-Read this first in a new chat. Then `SPEC.md`, `SCHEMA.md`, `DECISIONS.md`, `AGENTS.project.md`, `RELEASE.md`.
+Read this first in a new chat. Then `SPEC.md`, `SCHEMA.md`, `DECISIONS.md`, `AGENTS.project.md`, `RELEASE.md`. Local Postgres on this Windows machine: `LOCAL.md`.
 
 You are continuing an **already deployed** product. Do not scaffold a new app. Do not rebuild on Vercel/Neon unless the user asks.
 
