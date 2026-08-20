@@ -1,3 +1,5 @@
+import { BrandGlyph } from "~/components/brand-glyph";
+import { resolveBrand } from "~/lib/domain/brands";
 import { categoryTone, initials } from "~/lib/domain/labels";
 import type { Category } from "~/lib/domain/types";
 import { cn } from "~/lib/utils";
@@ -11,6 +13,8 @@ export function MerchantMark({
   category: Category;
   size?: "sm" | "md";
 }) {
+  const brand = resolveBrand(name);
+  if (brand) return <BrandGlyph brand={brand} size={size} />;
   const tone = categoryTone(category);
   return (
     <span

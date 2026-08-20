@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { BrandGlyph } from "~/components/brand-glyph";
 import { Button } from "~/components/ui/button";
+import { resolveBrand } from "~/lib/domain/brands";
 import { CATEGORY_TONES } from "~/lib/domain/labels";
 
 export function Landing() {
@@ -154,10 +156,11 @@ function MockRow({
   amount: string;
   tone: string;
 }) {
+  const brand = resolveBrand(name);
   return (
     <li className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
-        <span className={`size-8 rounded-full ${tone}`} />
+        {brand ? <BrandGlyph brand={brand} /> : <span className={`size-8 rounded-full ${tone}`} />}
         <div>
           <p className="text-sm font-medium">{name}</p>
           <p className="text-xs text-muted">{date}</p>

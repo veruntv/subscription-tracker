@@ -307,3 +307,17 @@ Monthly dashboard figure = yearly / 12.
 
 **Consequences:** Do not cycle three tones by index. Do not assign lime to a category. Folded remainder uses `other`.
 
+---
+
+## 2026-08-20 — Known-brand logos on merchant names
+
+**Status:** accepted
+
+**Context:** Recurring charges are the same handful of services for most people. Initials on a colored disc do not help scan Netflix vs Hetzner. The user accepted the trademark risk of shipping those marks.
+
+**Decision:** A curated catalog (~90 services) maps name + aliases to a Simple Icons glyph (vendored paths, not a runtime CDN). The name field is a combobox: as the user types, matching brands appear; picking one fills the canonical name and category. `MerchantMark` uses the glyph when `resolveBrand(name)` hits, otherwise the category-colored initials. Unknown names stay custom. Logos are not a claim of partnership.
+
+**Why:** The list is easier to scan, and the combobox absorbs typos (`netlix` → Netflix) without a free-text-only form.
+
+**Consequences:** Do not fetch logos from the network. Do not add every brand on earth — extend `dev/extract-brands.mjs` and regenerate `brand-catalog.ts`. Unknown gyms and landlords stay initials.
+

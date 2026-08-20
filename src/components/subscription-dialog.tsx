@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 
+import { BrandNameField } from "~/components/brand-name-field";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select } from "~/components/ui/select";
+import { resolveBrand } from "~/lib/domain/brands";
 import { civilFromIso, civilToIso } from "~/lib/domain/civil-date";
 import {
   CADENCE_LABELS,
@@ -113,6 +115,7 @@ export function SubscriptionDialog({
       }
     }
 
+    const brand = resolveBrand(form.name.trim());
     onSubmit({
       name: form.name,
       amount,
@@ -120,7 +123,7 @@ export function SubscriptionDialog({
       cadence: form.cadence,
       intervalCount,
       startedAt,
-      category: form.category,
+      category: form.category === "other" && brand ? brand.category : form.category,
       cancelUrl: cancelUrl || null,
       notifyDaysBefore,
       status: initial?.status,
@@ -141,10 +144,11 @@ export function SubscriptionDialog({
         <div className="mt-5 grid grid-cols-2 gap-4">
           <div className="col-span-2 space-y-1.5">
             <Label htmlFor="name">Name</Label>
-            <Input
+            <BrandNameField
               id="name"
               value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              onChange={(name) => setForm({ ...form, name })}
+              onPick={(brand) => setForm({ ...form, name: brand.name, category: brand.category })}
             />
           </div>
           <div className="space-y-1.5">

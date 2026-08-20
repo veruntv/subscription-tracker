@@ -60,7 +60,7 @@ Tables were applied: `npx drizzle-kit push --force` inside the **application** T
 
 ## Design (do not revert)
 
-Pale lilac canvas `#F4EFF7`, grape sidebar `#44355B`, lime accent **only** `#D6F24C` (CTA + today — not a category). Mix bar, merchant marks, and by-category use one color per category: streaming orange `#FF7A33`, fitness moss `#3D8B6E`, software periwinkle `#6B63C9`, hosting teal `#12B5A0`, housing dusty rose `#C45C6A`, utilities steel `#4A7BA8`, news ochre `#C9A227`, other mauve `#8A7B96`. Calendar: today = lime disc; charge days = thistle fill. Calendar rows always 7 cells (31st must not stretch). Cells show **names + amounts**, not totals-only.
+Pale lilac canvas `#F4EFF7`, grape sidebar `#44355B`, lime accent **only** `#D6F24C` (CTA + today — not a category). Known merchant names (Netflix, Spotify, Hetzner, …) show a vendored brand glyph; unknown names use category-colored initials. Mix bar, unmarked merchants, and by-category use one color per category: streaming orange `#FF7A33`, fitness moss `#3D8B6E`, software periwinkle `#6B63C9`, hosting teal `#12B5A0`, housing dusty rose `#C45C6A`, utilities steel `#4A7BA8`, news ochre `#C9A227`, other mauve `#8A7B96`. Calendar: today = lime disc; charge days = thistle fill. Calendar rows always 7 cells (31st must not stretch). Cells show **names + amounts**, not totals-only.
 
 ## What is done
 
