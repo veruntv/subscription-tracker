@@ -56,8 +56,8 @@ function LoginForm() {
           {signup ? "Create an account" : "Sign in"}
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">
-          We email a one-time link. Same inbox flow for a first visit and a
-          return. No password to remember.
+          We email a one-time link. After you click it, this browser stays
+          signed in for 30 days — no code to type, no password.
         </p>
         <div className="mt-8 space-y-2">
           <Label htmlFor="email">Email</Label>

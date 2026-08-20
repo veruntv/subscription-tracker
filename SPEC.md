@@ -47,9 +47,9 @@ Editing amount, cadence, interval, or the first-charge date recalculates `nextCh
 Signed-in home (and the demo home) shows:
 
 - **Next charges** — upcoming active subscriptions, soonest first
-- **Monthly total** — normalized spend of all active subscriptions (see yearly rule below, then / 12)
-- **Yearly total** — normalized spend of all active subscriptions
-- **By category** — the same yearly (and monthly) totals grouped by category
+- **This calendar month** — sum of actual charge amounts whose charge date falls in the current month (full invoice, not yearly ÷ 12)
+- **Yearly total** — normalized spend of all active subscriptions (see table below)
+- **By category** — both figures, grouped by category
 
 Normalization for a single subscription, then summed:
 
@@ -60,7 +60,7 @@ Normalization for a single subscription, then summed:
 | `quarterly` | × 4 |
 | `yearly` | × 1 |
 
-Apply `intervalCount`: yearly factor is `multiplier / intervalCount` (every 2 months → `12 / 2 = 6` charges per year). Monthly total is yearly / 12.
+Apply `intervalCount`: yearly factor is `multiplier / intervalCount` (every 2 months → `12 / 2 = 6` charges per year). The dashboard hero **this month** is not this number ÷ 12; it is the sum of invoices that land in the current calendar month. The yearly figure stays normalized.
 
 Paused and canceled rows do not count.
 

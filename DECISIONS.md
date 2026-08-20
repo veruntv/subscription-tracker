@@ -81,7 +81,7 @@ Monthly dashboard figure = yearly / 12.
 
 **Why:** Simple, explainable, stable. Not “sum whatever happens to fall in this calendar year,” which jumps when a charge date moves.
 
-**Consequences:** Weekly is 52, not 365/7. Leap years do not change the number. Document this in the UI if anyone questions a few-cents difference vs a real calendar year.
+**Consequences:** Weekly is 52, not 365/7. Leap years do not change the number. Document this in the UI if anyone questions a few-cents difference vs a real calendar year. The **hero “this month” number** is a separate decision (calendar-month invoices) — see 2026-08-20.
 
 ---
 
@@ -264,3 +264,18 @@ Monthly dashboard figure = yearly / 12.
 **Why:** A demo list that dies on another device is the wrong first impression. An account is the product.
 
 **Consequences:** Preview without auth shows the landing, not a fake list. Do not resurrect a seeded demo without a new decision.
+
+---
+
+## 2026-08-20 — Dashboard “this month” is calendar-month invoices
+
+**Status:** accepted (narrows the 2026-08-18 yearly-normalization decision)
+
+**Context:** The hero labeled “This month” showed yearly ÷ 12. A $119.99 yearly gym looked like $10.00 in August even when the real invoice was $119.99. A July yearly charge still leaked into August as a few cents.
+
+**Decision:** The hero and the mix bar sum **actual charge amounts whose date falls in the current calendar month**. Yearly run-rate stays normalized (weekly×52 / monthly×12 / …) and is shown as “/ year”. Category rows show both: this month and / yr.
+
+**Why:** “This month” in English means the invoices this month, not the amortized average.
+
+**Consequences:** A yearly bill that lands in July is $0 in the August hero and still counts in / year. Weekly can appear 4–5 times in one month. Do not label the amortized figure “this month”.
+

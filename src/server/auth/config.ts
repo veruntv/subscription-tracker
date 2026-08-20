@@ -37,6 +37,17 @@ export const authConfig = {
         verificationTokensTable: verificationTokens,
       })
     : undefined,
+  trustHost: true,
+  session: env.DATABASE_URL
+    ? {
+        strategy: "database" as const,
+        maxAge: 60 * 60 * 24 * 30,
+        updateAge: 60 * 60 * 24,
+      }
+    : {
+        strategy: "jwt" as const,
+        maxAge: 60 * 60 * 24 * 30,
+      },
   callbacks: {
     session: ({ session, user }) => ({
       ...session,

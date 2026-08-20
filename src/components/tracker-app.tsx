@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   LayoutDashboard,
+  LogOut,
   MoreHorizontal,
   Plus,
   Receipt,
   Settings,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 import { MerchantMark } from "~/components/merchant-mark";
 import { MonthCalendar, shiftMonth } from "~/components/month-calendar";
@@ -28,7 +30,13 @@ import {
   greetingForHour,
 } from "~/lib/domain/labels";
 import { formatMinor } from "~/lib/domain/money";
-import { categoryMix, totalsByCategory, totalsByCurrency, upcomingCharges } from "~/lib/domain/totals";
+import {
+  categoryMix,
+  totalsByCategoryForCalendarMonth,
+  totalsByCurrency,
+  totalsByCurrencyForCalendarMonth,
+  upcomingCharges,
+} from "~/lib/domain/totals";
 import type { Subscription, SubscriptionInput, UserSettings } from "~/lib/domain/types";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -47,6 +55,11 @@ function tabFromHash(): Tab {
   return TABS.some((tab) => tab.id === hash) ? (hash as Tab) : "overview";
 }
 
+function localYearMonth(): { year: number; month: number } {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+}
+
 export function TrackerApp({
   accountReady,
   email,
@@ -63,8 +76,10 @@ export function TrackerApp({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [menuId, setMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const [hour] = useState(() => new Date().getHours());
   const [tab, setTab] = useState<Tab>("overview");
+  const thisMonth = useMemo(() => localYearMonth(), []);
 
   useEffect(() => {
     setTab(tabFromHash());
@@ -72,6 +87,23 @@ export function TrackerApp({
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  useEffect(() => {
+    if (!menuId) return;
+    const onPointer = (event: MouseEvent) => {
+      if (menuRef.current?.contains(event.target as Node)) return;
+      setMenuId(null);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuId(null);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuId]);
 
   const openTab = (next: Tab) => {
     setTab(next);
@@ -106,14 +138,23 @@ export function TrackerApp({
     defaultCurrency: settingsQuery.data?.defaultCurrency ?? "USD",
   };
 
-  const currencyTotals = useMemo(() => totalsByCurrency(items), [items]);
-  const categoryTotals = useMemo(() => totalsByCategory(items), [items]);
-  const upcoming = useMemo(() => upcomingCharges(items), [items]);
-  const primary = currencyTotals[0];
-  const mix = useMemo(
-    () => (primary ? categoryMix(categoryTotals, primary.currency) : []),
-    [categoryTotals, primary],
+  const yearlyTotals = useMemo(() => totalsByCurrency(items), [items]);
+  const monthTotals = useMemo(
+    () => totalsByCurrencyForCalendarMonth(items, thisMonth.year, thisMonth.month),
+    [items, thisMonth.month, thisMonth.year],
   );
+  const categoryMonthTotals = useMemo(
+    () => totalsByCategoryForCalendarMonth(items, thisMonth.year, thisMonth.month),
+    [items, thisMonth.month, thisMonth.year],
+  );
+  const upcoming = useMemo(() => upcomingCharges(items), [items]);
+  const primaryYear = yearlyTotals[0];
+  const primaryMonth = monthTotals.find((row) => row.currency === primaryYear?.currency) ?? monthTotals[0];
+  const mix = useMemo(() => {
+    const currency = primaryMonth?.currency ?? primaryYear?.currency;
+    if (!currency) return [];
+    return categoryMix(categoryMonthTotals, currency).filter((row) => row.monthly > 0);
+  }, [categoryMonthTotals, primaryMonth?.currency, primaryYear?.currency]);
   const mixTotal = mix.reduce((sum, row) => sum + row.monthly, 0);
   const mixLabels = mix.filter((row) => row.category !== "remainder").slice(0, 3);
   const activeCount = items.filter((item) => item.status === "active").length;
@@ -189,6 +230,14 @@ export function TrackerApp({
             <Settings />
             Settings
           </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-surface hover:bg-surface/10 hover:text-surface"
+            onClick={() => void signOut({ callbackUrl: "/" })}
+          >
+            <LogOut />
+            Sign out
+          </Button>
         </div>
       </aside>
 
@@ -211,9 +260,9 @@ export function TrackerApp({
         {tab === "overview" ? (
         <section className="mt-6 grid grid-cols-12 gap-5">
           <article className="col-span-6 rounded-2xl bg-surface p-7 shadow-border">
-            <p className="text-sm text-muted">This month</p>
+            <p className="text-sm text-muted">Charged this month</p>
             <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight">
-              {primary ? formatMinor(primary.monthly, primary.currency) : "—"}
+              {primaryMonth ? formatMinor(primaryMonth.monthly, primaryMonth.currency) : "—"}
             </p>
             {mix.length > 0 ? (
               <>
@@ -226,8 +275,8 @@ export function TrackerApp({
                         flexGrow: mixTotal > 0 ? Math.max(row.monthly / mixTotal, 0.04) : 1,
                       }}
                       title={
-                        primary
-                          ? `${row.category === "remainder" ? "Other" : CATEGORY_LABELS[row.category]} ${formatMinor(row.monthly, primary.currency)}`
+                        primaryMonth
+                          ? `${row.category === "remainder" ? "Other" : CATEGORY_LABELS[row.category]} ${formatMinor(row.monthly, primaryMonth.currency)}`
                           : undefined
                       }
                     />
@@ -239,30 +288,32 @@ export function TrackerApp({
                       <span className={cn("size-2 rounded-full", mixTone(index))} />
                       {row.category === "remainder" ? "Other" : CATEGORY_LABELS[row.category]}{" "}
                       <span className="tabular-nums text-fg">
-                        {primary ? amountOnly(row.monthly, primary.currency) : row.monthly}
+                        {primaryMonth ? amountOnly(row.monthly, primaryMonth.currency) : row.monthly}
                       </span>
                     </span>
                   ))}
                 </p>
               </>
-            ) : null}
+            ) : (
+              <p className="mt-6 text-sm text-muted">No charges land this calendar month.</p>
+            )}
             <div className="mt-5 flex items-baseline justify-between gap-4 text-xs text-muted">
               <p>
                 {activeCount} active
-                {primary ? (
+                {primaryYear ? (
                   <>
                     {" · "}
                     <span className="tabular-nums">
-                      {formatMinor(primary.yearly, primary.currency)} / year
+                      {formatMinor(primaryYear.yearly, primaryYear.currency)} / year
                     </span>
                   </>
                 ) : null}
               </p>
-              {currencyTotals.length > 1 ? (
+              {yearlyTotals.length > 1 ? (
                 <p className="tabular-nums">
-                  {currencyTotals
+                  {yearlyTotals
                     .slice(1)
-                    .map((row) => `${formatMinor(row.monthly, row.currency)} / mo`)
+                    .map((row) => `${formatMinor(row.yearly, row.currency)} / yr`)
                     .join(" · ")}
                 </p>
               ) : null}
@@ -296,20 +347,22 @@ export function TrackerApp({
           <article className="col-span-12 rounded-2xl bg-surface p-6 shadow-border">
             <p className="text-sm font-medium">By category</p>
             <ul className="mt-4 grid grid-cols-2 gap-x-10 gap-y-3">
-              {categoryTotals.length === 0 ? (
+              {categoryMonthTotals.length === 0 ? (
                 <li className="text-sm text-muted">No active subscriptions.</li>
               ) : (
-                categoryTotals.map((row, index) => {
+                categoryMonthTotals.map((row, index) => {
                   const share =
-                    primary && primary.yearly > 0 ? row.yearly / primary.yearly : 0;
+                    primaryYear && primaryYear.yearly > 0 ? row.yearly / primaryYear.yearly : 0;
                   return (
                     <li key={`${row.category}-${row.currency}`} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between gap-3 text-sm">
                         <span className="flex items-center gap-2">
                           <span className={cn("size-2 rounded-full", mixTone(index))} />
                           {CATEGORY_LABELS[row.category]}
                         </span>
                         <span className="tabular-nums text-muted">
+                          {formatMinor(row.monthly, row.currency)} this month
+                          <span className="mx-1.5 text-border">·</span>
                           {formatMinor(row.yearly, row.currency)} / yr
                         </span>
                       </div>
@@ -356,7 +409,7 @@ export function TrackerApp({
             />
           </header>
 
-          <div className="overflow-hidden rounded-xl border border-border">
+          <div className="overflow-visible rounded-xl border border-border">
             <table className="w-full text-left text-sm">
               <thead className="bg-bg text-xs font-medium text-muted">
                 <tr>
@@ -368,7 +421,7 @@ export function TrackerApp({
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((item) => (
+                {filtered.map((item, index) => (
                   <tr key={item.id} className="border-t border-border">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -403,45 +456,56 @@ export function TrackerApp({
                       {formatMinor(item.amount, item.currency)}
                     </td>
                     <td className="relative px-2 py-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Actions for ${item.name}`}
-                        onClick={() => setMenuId(menuId === item.id ? null : item.id)}
+                      <div
+                        ref={menuId === item.id ? menuRef : undefined}
+                        className="relative flex justify-end"
                       >
-                        <MoreHorizontal />
-                      </Button>
-                      {menuId === item.id ? (
-                        <div className="absolute right-3 z-20 mt-1 w-40 rounded-xl bg-surface py-1 shadow-border">
-                          <MenuItem
-                            label="Edit"
-                            onClick={() => {
-                              setEditing(item);
-                              setDialogOpen(true);
-                              setMenuId(null);
-                            }}
-                          />
-                          {item.status === "active" ? (
-                            <MenuItem label="Pause" onClick={() => setStatus(item.id, "paused")} />
-                          ) : (
-                            <MenuItem label="Resume" onClick={() => setStatus(item.id, "active")} />
-                          )}
-                          {item.status !== "canceled" ? (
-                            <MenuItem label="Cancel" onClick={() => setStatus(item.id, "canceled")} />
-                          ) : null}
-                          {item.cancelUrl ? (
-                            <a
-                              href={item.cancelUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block px-3 py-2 text-left text-sm hover:bg-bg"
-                            >
-                              Manage page
-                            </a>
-                          ) : null}
-                          <MenuItem label="Delete" onClick={() => remove(item.id)} />
-                        </div>
-                      ) : null}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${item.name}`}
+                          aria-expanded={menuId === item.id}
+                          onClick={() => setMenuId(menuId === item.id ? null : item.id)}
+                        >
+                          <MoreHorizontal />
+                        </Button>
+                        {menuId === item.id ? (
+                          <div
+                            className={cn(
+                              "absolute right-0 z-30 w-40 rounded-xl border border-border bg-surface py-1 shadow-border",
+                              index >= filtered.length - 1 ? "bottom-full mb-1" : "top-full mt-1",
+                            )}
+                          >
+                            <MenuItem
+                              label="Edit"
+                              onClick={() => {
+                                setEditing(item);
+                                setDialogOpen(true);
+                                setMenuId(null);
+                              }}
+                            />
+                            {item.status === "active" ? (
+                              <MenuItem label="Pause" onClick={() => setStatus(item.id, "paused")} />
+                            ) : (
+                              <MenuItem label="Resume" onClick={() => setStatus(item.id, "active")} />
+                            )}
+                            {item.status !== "canceled" ? (
+                              <MenuItem label="Cancel" onClick={() => setStatus(item.id, "canceled")} />
+                            ) : null}
+                            {item.cancelUrl ? (
+                              <a
+                                href={item.cancelUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block px-3 py-2 text-left text-sm hover:bg-bg"
+                              >
+                                Manage page
+                              </a>
+                            ) : null}
+                            <MenuItem label="Delete" onClick={() => remove(item.id)} />
+                          </div>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}

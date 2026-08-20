@@ -1,3 +1,4 @@
+import { occurrencesInMonth } from "~/lib/domain/schedule";
 import { mulDivRound, yearlyMinor } from "~/lib/domain/money";
 import type { Category, Subscription } from "~/lib/domain/types";
 
@@ -58,10 +59,58 @@ export function totalsByCategory(items: readonly Subscription[]): CategoryTotals
     .sort((a, b) => b.yearly - a.yearly);
 }
 
+/**
+ * `monthly` = actual charges landing in that calendar month (full invoice).
+ * `yearly` = normalized run-rate (weekly×52 / monthly×12 / …).
+ */
+export function totalsByCategoryForCalendarMonth(
+  items: readonly Subscription[],
+  year: number,
+  month: number,
+): CategoryTotals[] {
+  const map = new Map<
+    string,
+    { category: Category; currency: string; monthly: number; yearly: number }
+  >();
+  for (const item of activeSubscriptions(items)) {
+    const key = `${item.category}:${item.currency}`;
+    const hits = occurrencesInMonth(item, year, month).length;
+    const current = map.get(key) ?? {
+      category: item.category,
+      currency: item.currency,
+      monthly: 0,
+      yearly: 0,
+    };
+    current.monthly += item.amount * hits;
+    current.yearly += yearlyMinor(item.amount, item.cadence, item.intervalCount);
+    map.set(key, current);
+  }
+  return [...map.values()].sort((a, b) => b.yearly - a.yearly);
+}
+
+export function totalsByCurrencyForCalendarMonth(
+  items: readonly Subscription[],
+  year: number,
+  month: number,
+): CurrencyTotals[] {
+  const map = new Map<string, { monthly: number; yearly: number }>();
+  for (const item of activeSubscriptions(items)) {
+    const hits = occurrencesInMonth(item, year, month).length;
+    const current = map.get(item.currency) ?? { monthly: 0, yearly: 0 };
+    current.monthly += item.amount * hits;
+    current.yearly += yearlyMinor(item.amount, item.cadence, item.intervalCount);
+    map.set(item.currency, current);
+  }
+  return [...map.entries()]
+    .map(([currency, row]) => ({ currency, ...row }))
+    .sort((a, b) => a.currency.localeCompare(b.currency));
+}
+
 export function categoryMix(
   rows: readonly CategoryTotals[],
   currency: string,
   namedLimit = 3,
+  field: "monthly" | "yearly" = "monthly",
 ): MixSegment[] {
   const ofCurrency = rows.filter((row) => row.currency === currency);
   const showAll = ofCurrency.length <= namedLimit + 1;
@@ -69,13 +118,14 @@ export function categoryMix(
   const tail = showAll ? [] : ofCurrency.slice(namedLimit);
   const restYearly = tail.reduce((sum, row) => sum + row.yearly, 0);
   const restMonthly = tail.reduce((sum, row) => sum + row.monthly, 0);
+  const restWeight = field === "yearly" ? restYearly : restMonthly;
   const segments: MixSegment[] = named.map((row) => ({
     key: `${row.category}:${row.currency}`,
     category: row.category,
     monthly: row.monthly,
     yearly: row.yearly,
   }));
-  if (restYearly > 0) {
+  if (restWeight > 0) {
     segments.push({
       key: `remainder:${currency}`,
       category: "remainder",
