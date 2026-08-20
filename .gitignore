@@ -50,7 +50,6 @@ vite.config.ts
 /server
 /scripts
 /migrations
-/AGENTS.md
 .prettierrc
 eslint.config.mjs
 /startup.sh
