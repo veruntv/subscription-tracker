@@ -1,10 +1,13 @@
 import { and, eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { todayInZone } from "~/lib/domain/civil-date";
+import { applyStatus, buildSubscription } from "~/lib/domain/subscription";
 import { CADENCES, CATEGORIES } from "~/lib/domain/types";
-import { buildSubscription } from "~/lib/domain/subscription";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { subscriptions } from "~/server/db/schema";
+import { db } from "~/server/db";
+import { subscriptions, users } from "~/server/db/schema";
 import { civilToTimestamp, rowToSubscription } from "~/server/subscriptions/map";
 
 const civilSchema = z.object({
@@ -25,6 +28,15 @@ const inputSchema = z.object({
   notifyDaysBefore: z.number().int().min(0).max(30),
 });
 
+async function userToday(database: typeof db, userId: string) {
+  const row = await database
+    .select({ timezone: users.timezone })
+    .from(users)
+    .where(eq(users.id, userId))
+    .then((rows) => rows[0]);
+  return todayInZone(row?.timezone ?? "UTC");
+}
+
 export const subscriptionRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
@@ -35,7 +47,7 @@ export const subscriptionRouter = createTRPCRouter({
   }),
 
   create: protectedProcedure.input(inputSchema).mutation(async ({ ctx, input }) => {
-    const built = buildSubscription(input, crypto.randomUUID());
+    const built = buildSubscription(input, crypto.randomUUID(), undefined, await userToday(ctx.db, ctx.session.user.id));
     await ctx.db.insert(subscriptions).values({
       id: built.id,
       userId: ctx.session.user.id,
@@ -69,9 +81,14 @@ export const subscriptionRouter = createTRPCRouter({
         )
         .then((rows) => rows[0]);
       if (!existing) {
-        throw new Error("Subscription not found");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Subscription not found" });
       }
-      const built = buildSubscription(input, input.id, existing.createdAt.toISOString());
+      const built = buildSubscription(
+        input,
+        input.id,
+        existing.createdAt.toISOString(),
+        await userToday(ctx.db, ctx.session.user.id),
+      );
       await ctx.db
         .update(subscriptions)
         .set({
@@ -104,9 +121,30 @@ export const subscriptionRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db
+        .select()
+        .from(subscriptions)
+        .where(
+          and(
+            eq(subscriptions.id, input.id),
+            eq(subscriptions.userId, ctx.session.user.id),
+          ),
+        )
+        .then((rows) => rows[0]);
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Subscription not found" });
+      }
+      const built = applyStatus(
+        rowToSubscription(existing),
+        input.status,
+        await userToday(ctx.db, ctx.session.user.id),
+      );
       await ctx.db
         .update(subscriptions)
-        .set({ status: input.status })
+        .set({
+          status: built.status,
+          nextChargeAt: civilToTimestamp(built.nextChargeAt),
+        })
         .where(
           and(
             eq(subscriptions.id, input.id),

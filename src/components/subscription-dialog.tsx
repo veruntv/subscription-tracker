@@ -46,12 +46,16 @@ export function SubscriptionDialog({
   open,
   initial,
   defaultCurrency,
+  pending = false,
+  error: submitError = null,
   onClose,
   onSubmit,
 }: {
   open: boolean;
   initial: Subscription | null;
   defaultCurrency: string;
+  pending?: boolean;
+  error?: string | null;
   onClose: () => void;
   onSubmit: (input: SubscriptionInput) => void;
 }) {
@@ -78,6 +82,15 @@ export function SubscriptionDialog({
     setError(null);
   }, [open, initial, defaultCurrency]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !pending) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, pending, onClose]);
+
   if (!open) return null;
 
   const submit = () => {
@@ -97,12 +110,12 @@ export function SubscriptionDialog({
       setError("Pick a valid first-charge date.");
       return;
     }
-    if (!Number.isInteger(intervalCount) || intervalCount < 1) {
-      setError("Interval must be at least 1.");
+    if (!Number.isInteger(intervalCount) || intervalCount < 1 || intervalCount > 24) {
+      setError("Interval must be between 1 and 24.");
       return;
     }
-    if (!Number.isInteger(notifyDaysBefore) || notifyDaysBefore < 0) {
-      setError("Reminder days must be 0 or more.");
+    if (!Number.isInteger(notifyDaysBefore) || notifyDaysBefore < 0 || notifyDaysBefore > 30) {
+      setError("Reminder days must be between 0 and 30.");
       return;
     }
     const cancelUrl = form.cancelUrl.trim();
@@ -141,7 +154,14 @@ export function SubscriptionDialog({
         <h2 id="subscription-dialog-title" className="font-display text-2xl tracking-tight">
           {initial ? "Edit subscription" : "Add subscription"}
         </h2>
-        <div className="mt-5 grid grid-cols-2 gap-4">
+        <form
+          className="mt-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!pending) submit();
+          }}
+        >
+        <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2 space-y-1.5">
             <Label htmlFor="name">Name</Label>
             <BrandNameField
@@ -196,6 +216,7 @@ export function SubscriptionDialog({
               id="interval"
               type="number"
               min={1}
+              max={24}
               value={form.intervalCount}
               onChange={(event) =>
                 setForm({ ...form, intervalCount: event.target.value })
@@ -233,6 +254,7 @@ export function SubscriptionDialog({
               id="notify"
               type="number"
               min={0}
+              max={30}
               value={form.notifyDaysBefore}
               onChange={(event) =>
                 setForm({ ...form, notifyDaysBefore: event.target.value })
@@ -249,13 +271,20 @@ export function SubscriptionDialog({
             />
           </div>
         </div>
-        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+        {error || submitError ? (
+          <p role="alert" className="mt-3 text-sm text-danger">
+            {error ?? submitError}
+          </p>
+        ) : null}
         <div className="mt-6 flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={pending}>
             Cancel
           </Button>
-          <Button onClick={submit}>{initial ? "Save" : "Add"}</Button>
+          <Button type="submit" disabled={pending}>
+            {pending ? "Saving…" : initial ? "Save" : "Add"}
+          </Button>
         </div>
+        </form>
       </div>
     </div>
   );

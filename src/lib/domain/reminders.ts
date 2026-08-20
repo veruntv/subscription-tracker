@@ -27,9 +27,18 @@ export function isDueThisHour(input: {
   const day = Number(local.find((part) => part.type === "day")?.value);
   const hour = Number(local.find((part) => part.type === "hour")?.value);
   if (!year || !month || !day || Number.isNaN(hour)) return false;
-  if (hour !== 9) return false;
+  if (hour < 9) return false;
 
   return compareCivil(reminderCivilDate(subscription), { year, month, day }) === 0;
+}
+
+export function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: unknown }).code === "23505"
+  );
 }
 
 export function reminderIdempotencyKey(subscription: Subscription): {
