@@ -260,10 +260,28 @@ export function TrackerApp({
         {tab === "overview" ? (
         <section className="mt-6 grid grid-cols-12 gap-5">
           <article className="col-span-6 rounded-2xl bg-surface p-7 shadow-border">
-            <p className="text-sm text-muted">Charged this month</p>
-            <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight">
-              {primaryMonth ? formatMinor(primaryMonth.monthly, primaryMonth.currency) : "—"}
-            </p>
+            <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
+              <div>
+                <p className="text-sm text-muted">Charged this month</p>
+                <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight">
+                  {primaryMonth ? formatMinor(primaryMonth.monthly, primaryMonth.currency) : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted">Per year</p>
+                <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">
+                  {primaryYear ? formatMinor(primaryYear.yearly, primaryYear.currency) : "—"}
+                </p>
+                {yearlyTotals.length > 1 ? (
+                  <p className="mt-1 text-xs tabular-nums text-muted">
+                    {yearlyTotals
+                      .slice(1)
+                      .map((row) => `${formatMinor(row.yearly, row.currency)} / yr`)
+                      .join(" · ")}
+                  </p>
+                ) : null}
+              </div>
+            </div>
             {mix.length > 0 ? (
               <>
                 <div className="mt-6 flex h-2.5 gap-1 overflow-hidden rounded-full">
@@ -297,27 +315,7 @@ export function TrackerApp({
             ) : (
               <p className="mt-6 text-sm text-muted">No charges land this calendar month.</p>
             )}
-            <div className="mt-5 flex items-baseline justify-between gap-4 text-xs text-muted">
-              <p>
-                {activeCount} active
-                {primaryYear ? (
-                  <>
-                    {" · "}
-                    <span className="tabular-nums">
-                      {formatMinor(primaryYear.yearly, primaryYear.currency)} / year
-                    </span>
-                  </>
-                ) : null}
-              </p>
-              {yearlyTotals.length > 1 ? (
-                <p className="tabular-nums">
-                  {yearlyTotals
-                    .slice(1)
-                    .map((row) => `${formatMinor(row.yearly, row.currency)} / yr`)
-                    .join(" · ")}
-                </p>
-              ) : null}
-            </div>
+            <p className="mt-5 text-xs text-muted">{activeCount} active</p>
           </article>
 
           <article className="col-span-6 rounded-2xl bg-surface p-6 shadow-border">

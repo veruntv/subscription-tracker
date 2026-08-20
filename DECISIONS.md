@@ -193,7 +193,7 @@ Monthly dashboard figure = yearly / 12.
 
 **Why:** “73 EUR” is abstract until you see it is mostly gym + streaming + hosting. Upcoming already owns the next charge; this card owns composition.
 
-**Consequences:** The “By category” list stays as the full breakdown. Do not add a sparkline or vs-last-month here — v1 has no history.
+**Consequences:** The “By category” list stays as the full breakdown. Do not add a sparkline or vs-last-month here — v1 has no history. Year-as-caption superseded — see 2026-08-20 yearly figure.
 
 ---
 
@@ -278,4 +278,18 @@ Monthly dashboard figure = yearly / 12.
 **Why:** “This month” in English means the invoices this month, not the amortized average.
 
 **Consequences:** A yearly bill that lands in July is $0 in the August hero and still counts in / year. Weekly can appear 4–5 times in one month. Do not label the amortized figure “this month”.
+
+---
+
+## 2026-08-20 — Yearly figure is a second metric, not a caption
+
+**Status:** accepted (narrows “Spend headline shows mix”)
+
+**Context:** After calendar-month invoices, yearly spend sat on an `xs` caption (`3 active · 153.26 USD / year`) and was easy to miss next to the 5xl this-month number.
+
+**Decision:** Same card: this-month stays the 5xl hero; **Per year** is a labeled 3xl figure beside it. Active count stays a caption. The mix bar still reflects this month only.
+
+**Why:** The two numbers answer different questions. Yearly is the run-rate; it should read as a metric, not a footnote.
+
+**Consequences:** Do not grow yearly to match this-month (5xl). Do not move Upcoming off that row for v1.
 
