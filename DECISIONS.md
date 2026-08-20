@@ -293,3 +293,17 @@ Monthly dashboard figure = yearly / 12.
 
 **Consequences:** Do not grow yearly to match this-month (5xl). Do not move Upcoming off that row for v1.
 
+---
+
+## 2026-08-20 — One color per category
+
+**Status:** accepted (supersedes cycling orange / grape / teal on mix bars and marks)
+
+**Context:** Eight categories shared three hues, so streaming, hosting, and news looked identical. Mix segments were painted by list order, not category: Fitness could be grape today and orange tomorrow. Merchant marks hashed the name and ignored `category`.
+
+**Decision:** Each category has a stable color used on the mix bar, by-category rows, merchant marks, and the landing mock: streaming orange `#FF7A33`, fitness moss `#3D8B6E`, software periwinkle `#6B63C9`, hosting teal `#12B5A0`, housing dusty rose `#C45C6A`, utilities steel `#4A7BA8`, news ochre `#C9A227`, other mauve `#8A7B96`. Lime stays CTA + today only. Grape stays chrome (sidebar, landing footer), not a category.
+
+**Why:** The mix is a category chart. A color that follows the category, not the sort order, is the chart.
+
+**Consequences:** Do not cycle three tones by index. Do not assign lime to a category. Folded remainder uses `other`.
+

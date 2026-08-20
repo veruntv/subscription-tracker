@@ -1,15 +1,17 @@
-import { initials, markTone } from "~/lib/domain/labels";
+import { categoryTone, initials } from "~/lib/domain/labels";
+import type { Category } from "~/lib/domain/types";
 import { cn } from "~/lib/utils";
 
 export function MerchantMark({
   name,
+  category,
   size = "md",
 }: {
   name: string;
-  category?: string;
+  category: Category;
   size?: "sm" | "md";
 }) {
-  const tone = markTone(name);
+  const tone = categoryTone(category);
   return (
     <span
       className={cn(

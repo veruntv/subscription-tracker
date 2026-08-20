@@ -11,34 +11,21 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   other: "Other",
 };
 
-export const MIX_TONES = ["bg-orange", "bg-grape", "bg-teal"] as const;
-export const MARK_TEXT = ["text-ink", "text-lilac", "text-ink"] as const;
-
-export function mixTone(index: number): string {
-  return MIX_TONES[index % MIX_TONES.length] ?? "bg-grape";
-}
-
-export function markTone(name: string): { bg: string; fg: string } {
-  let hash = 0;
-  for (const char of name) {
-    hash = (hash + char.charCodeAt(0)) % MIX_TONES.length;
-  }
-  return {
-    bg: MIX_TONES[hash] ?? "bg-grape",
-    fg: MARK_TEXT[hash] ?? "text-lilac",
-  };
-}
-
-export const CATEGORY_TONES: Record<Category, string> = {
-  streaming: "bg-orange",
-  fitness: "bg-grape",
-  software: "bg-teal",
-  hosting: "bg-orange",
-  housing: "bg-grape",
-  utilities: "bg-teal",
-  news: "bg-orange",
-  other: "bg-grape",
+export const CATEGORY_TONES: Record<Category, { bg: string; fg: string }> = {
+  streaming: { bg: "bg-orange", fg: "text-ink" },
+  fitness: { bg: "bg-moss", fg: "text-lilac" },
+  software: { bg: "bg-periwinkle", fg: "text-lilac" },
+  hosting: { bg: "bg-teal", fg: "text-ink" },
+  housing: { bg: "bg-rose", fg: "text-ink" },
+  utilities: { bg: "bg-steel", fg: "text-lilac" },
+  news: { bg: "bg-ochre", fg: "text-ink" },
+  other: { bg: "bg-mauve", fg: "text-lilac" },
 };
+
+export function categoryTone(category: Category | "remainder"): { bg: string; fg: string } {
+  if (category === "remainder") return CATEGORY_TONES.other;
+  return CATEGORY_TONES[category];
+}
 
 export const CADENCE_LABELS: Record<Cadence, string> = {
   weekly: "Weekly",

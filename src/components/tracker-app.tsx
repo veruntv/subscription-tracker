@@ -23,7 +23,7 @@ import { formatCivil, todayUtcCivil } from "~/lib/domain/civil-date";
 import {
   CADENCE_LABELS,
   CATEGORY_LABELS,
-  mixTone,
+  categoryTone,
   CURRENCIES,
   STATUS_LABELS,
   TIMEZONES,
@@ -285,10 +285,10 @@ export function TrackerApp({
             {mix.length > 0 ? (
               <>
                 <div className="mt-6 flex h-2.5 gap-1 overflow-hidden rounded-full">
-                  {mix.map((row, index) => (
+                  {mix.map((row) => (
                     <span
                       key={row.key}
-                      className={cn("h-full min-w-1", mixTone(index))}
+                      className={cn("h-full min-w-1", categoryTone(row.category).bg)}
                       style={{
                         flexGrow: mixTotal > 0 ? Math.max(row.monthly / mixTotal, 0.04) : 1,
                       }}
@@ -301,9 +301,9 @@ export function TrackerApp({
                   ))}
                 </div>
                 <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-                  {mixLabels.map((row, index) => (
+                  {mixLabels.map((row) => (
                     <span key={row.key} className="inline-flex items-center gap-1.5">
-                      <span className={cn("size-2 rounded-full", mixTone(index))} />
+                      <span className={cn("size-2 rounded-full", categoryTone(row.category).bg)} />
                       {row.category === "remainder" ? "Other" : CATEGORY_LABELS[row.category]}{" "}
                       <span className="tabular-nums text-fg">
                         {primaryMonth ? amountOnly(row.monthly, primaryMonth.currency) : row.monthly}
@@ -348,14 +348,14 @@ export function TrackerApp({
               {categoryMonthTotals.length === 0 ? (
                 <li className="text-sm text-muted">No active subscriptions.</li>
               ) : (
-                categoryMonthTotals.map((row, index) => {
+                categoryMonthTotals.map((row) => {
                   const share =
                     primaryYear && primaryYear.yearly > 0 ? row.yearly / primaryYear.yearly : 0;
                   return (
                     <li key={`${row.category}-${row.currency}`} className="space-y-1.5">
                       <div className="flex items-center justify-between gap-3 text-sm">
                         <span className="flex items-center gap-2">
-                          <span className={cn("size-2 rounded-full", mixTone(index))} />
+                          <span className={cn("size-2 rounded-full", categoryTone(row.category).bg)} />
                           {CATEGORY_LABELS[row.category]}
                         </span>
                         <span className="tabular-nums text-muted">
@@ -366,7 +366,7 @@ export function TrackerApp({
                       </div>
                       <span className="block h-1.5 overflow-hidden rounded-full bg-bg">
                         <span
-                          className={cn("block h-full rounded-full", mixTone(index))}
+                          className={cn("block h-full rounded-full", categoryTone(row.category).bg)}
                           style={{ width: `${Math.max(6, Math.round(share * 100))}%` }}
                         />
                       </span>
