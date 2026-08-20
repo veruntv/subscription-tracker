@@ -1,4 +1,5 @@
 import { env } from "~/env";
+import { getDailyFxRates } from "~/server/fx/rates";
 import { runReminders } from "~/server/reminders/run";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,6 @@ export async function GET(request: Request) {
     }
   }
 
-  const result = await runReminders();
-  return Response.json({ ok: true, ...result });
+  const [result, fx] = await Promise.all([runReminders(), getDailyFxRates()]);
+  return Response.json({ ok: true, fx: Boolean(fx), ...result });
 }

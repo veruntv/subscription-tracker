@@ -1,3 +1,4 @@
+import { convertMinor, type FxTable } from "~/lib/domain/fx";
 import { occurrencesInMonth } from "~/lib/domain/schedule";
 import { mulDivRound, yearlyMinor } from "~/lib/domain/money";
 import type { Category, Subscription } from "~/lib/domain/types";
@@ -134,6 +135,84 @@ export function categoryMix(
     });
   }
   return segments;
+}
+
+export function totalsInCurrency(
+  items: readonly Subscription[],
+  target: string,
+  fx: FxTable,
+): CurrencyTotals {
+  let yearly = 0;
+  const currency = target.toUpperCase();
+  for (const item of activeSubscriptions(items)) {
+    const converted = convertMinor(
+      yearlyMinor(item.amount, item.cadence, item.intervalCount),
+      item.currency,
+      currency,
+      fx,
+    );
+    if (converted === null) continue;
+    yearly += converted;
+  }
+  return {
+    currency,
+    yearly,
+    monthly: mulDivRound(yearly, 1, 12),
+  };
+}
+
+export function totalsInCurrencyForCalendarMonth(
+  items: readonly Subscription[],
+  target: string,
+  fx: FxTable,
+  year: number,
+  month: number,
+): CurrencyTotals {
+  let monthly = 0;
+  let yearly = 0;
+  const currency = target.toUpperCase();
+  for (const item of activeSubscriptions(items)) {
+    const hits = occurrencesInMonth(item, year, month).length;
+    const monthConverted = convertMinor(item.amount * hits, item.currency, currency, fx);
+    const yearConverted = convertMinor(
+      yearlyMinor(item.amount, item.cadence, item.intervalCount),
+      item.currency,
+      currency,
+      fx,
+    );
+    if (monthConverted !== null) monthly += monthConverted;
+    if (yearConverted !== null) yearly += yearConverted;
+  }
+  return { currency, monthly, yearly };
+}
+
+export function totalsByCategoryInCurrencyForCalendarMonth(
+  items: readonly Subscription[],
+  target: string,
+  fx: FxTable,
+  year: number,
+  month: number,
+): CategoryTotals[] {
+  const currency = target.toUpperCase();
+  const map = new Map<Category, { monthly: number; yearly: number }>();
+  for (const item of activeSubscriptions(items)) {
+    const hits = occurrencesInMonth(item, year, month).length;
+    const monthConverted = convertMinor(item.amount * hits, item.currency, currency, fx);
+    const yearConverted = convertMinor(
+      yearlyMinor(item.amount, item.cadence, item.intervalCount),
+      item.currency,
+      currency,
+      fx,
+    );
+    if (monthConverted === null || yearConverted === null) continue;
+    const current = map.get(item.category) ?? { monthly: 0, yearly: 0 };
+    current.monthly += monthConverted;
+    current.yearly += yearConverted;
+    map.set(item.category, current);
+  }
+  return [...map.entries()]
+    .map(([category, row]) => ({ category, currency, ...row }))
+    .sort((a, b) => b.yearly - a.yearly);
 }
 
 export function upcomingCharges(

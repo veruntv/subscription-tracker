@@ -10,7 +10,7 @@ Web app: list of recurring charges, monthly/yearly totals, category mix, month c
 
 - Signed out → marketing landing (`src/components/landing.tsx`)
 - Signed in → tracker (`src/components/tracker-app.tsx`) with tabs Overview / Calendar / Subscriptions
-- **No demo mode.** No localStorage list. No CSV, FX, charts, partner sharing, bank APIs, payments, native apps
+- **No demo mode.** No localStorage list. No CSV, charts, partner sharing, bank APIs, payments, native apps. Dashboard totals convert mixed currencies into `defaultCurrency` at a daily rate; rows keep the entered currency.
 - Desktop-primary. Do not design mobile-first
 - Auth: **magic link only** (Resend). No password, no OTP. Session **30 days**, database strategy when `DATABASE_URL` is set. Sign up = sign in (same email)
 
@@ -29,7 +29,7 @@ Web app: list of recurring charges, monthly/yearly totals, category mix, month c
 | Mail | Resend, region **Ireland**. Domain `vera-automation.online`: DKIM + SPF TXT `send` + MX `send` **Verified** (2026-08-20). Namecheap MX is **Mail Settings → Custom MX** (Host Records Type has no MX). Enable Receiving off |
 | Cron | **Not set yet.** Do not use Vercel Cron. Coolify scheduled task should `curl` `/api/cron/reminders` hourly with `CRON_SECRET` |
 
-User (Ilya / Vera in Coolify): works **only in the browser**. No local Node. You push via GitHub token she pastes (classic `repo`, then she **deletes** the token). Never commit secrets. Never ask her to run git locally.
+User (Ilya / Vera in Coolify): works **only in the browser**. This Windows machine has Node, git, and **GitHub CLI already logged in as `veruntv`** (`repo` scope, credential helper `gh auth git-credential`). Push with `git push`; do **not** ask her for a GitHub token. Never commit secrets. Never ask her to run git locally.
 
 ## Coolify env (names only — never paste secrets into git)
 
@@ -54,8 +54,9 @@ Tables were applied: `npx drizzle-kit push --force` inside the **application** T
 - `src/app/page.tsx` — landing vs tracker; **dynamic** `import("~/server/auth")` so a bad session cannot 500 the landing
 - `src/server/db/index.ts` — real Drizzle instance if `DATABASE_URL` exists (Proxy breaks `@auth/drizzle-adapter`)
 - `src/server/auth/config.ts` — Resend provider, Drizzle adapter, 30-day session
-- `src/app/login/page.tsx` — email → `signIn("resend")`. Generic red copy if Resend errors (including unverified domain)
-- `src/lib/domain/` — schedule (`anchorDay` 31st rule), money as integer minor units, totals (weekly×52, monthly×12, quarterly×4, yearly×1), `categoryMix`
+- `src/app/login/page.tsx` — email → `signIn("resend")`. Success replaces the form with **Check your email**. Generic red copy if Resend errors (including unverified domain)
+- `src/lib/domain/` — schedule (`anchorDay` 31st rule), money as integer minor units, FX convert via 1e8 scaled rates, totals (weekly×52, monthly×12, quarterly×4, yearly×1), `categoryMix`
+- `src/server/fx/rates.ts` — daily USD quotes from `open.er-api.com`, in-process cache by UTC date
 - `src/app/api/cron/reminders/route.ts` — Bearer `CRON_SECRET`, hourly 09:00 user-local
 
 ## Design (do not revert)
@@ -73,7 +74,7 @@ Pale lilac canvas `#F4EFF7`, grape sidebar `#44355B`, lime accent **only** `#D6F
 ## What to do next (order)
 
 1. Coolify Restart → Get started → `vernovicova@gmail.com` (spam too). EMAIL_FROM `Subscription Tracker <noreply@vera-automation.online>`
-3. Push any unpushed commits (need a fresh GitHub classic token `repo`, then she deletes it)
+3. Push any unpushed commits (`gh` on this machine is already authenticated as `veruntv`)
 4. Coolify cron hourly: `curl -fsS -H "Authorization: Bearer CRON_SECRET" https://vera-automation.online/api/cron/reminders`
 5. Sign out button, empty state after first login, Postgres backup in Coolify
 6. Optional nicer domain later — add in Coolify + Namecheap A record; keep this one
@@ -88,4 +89,4 @@ Pale lilac canvas `#F4EFF7`, grape sidebar `#44355B`, lime accent **only** `#D6F
 
 ## How to talk to the user
 
-Russian, click-by-click (which button, which field). She has no local terminal. Never tell her to use localhost. Never store tokens in git config after push.
+Russian, click-by-click (which button, which field). She has no local terminal. Never tell her to use localhost. Never ask her to paste a GitHub token — `gh` is already logged in. Never store tokens in git config.

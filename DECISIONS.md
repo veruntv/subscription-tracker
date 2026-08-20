@@ -58,7 +58,7 @@ Format: **Status**, context, decision, why, consequences.
 
 **Why:** $9.99 × 12 must be exact. Display is the only place that inserts a decimal separator.
 
-**Consequences:** Every API input is an integer (or a decimal string parsed once into minor units on the way in). v1 does no FX; mixed-currency totals stay grouped by currency.
+**Consequences:** Every API input is an integer (or a decimal string parsed once into minor units on the way in). Mixed-currency dashboard sums convert through a scaled integer rate — see 2026-08-20 FX.
 
 ---
 
@@ -320,4 +320,18 @@ Monthly dashboard figure = yearly / 12.
 **Why:** The list is easier to scan, and the combobox absorbs typos (`netlix` → Netflix) without a free-text-only form.
 
 **Consequences:** Do not fetch logos from the network. Do not add every brand on earth — extend `dev/extract-brands.mjs` and regenerate `brand-catalog.ts`. Unknown gyms and landlords stay initials.
+
+---
+
+## 2026-08-20 — Dashboard aggregates convert to defaultCurrency
+
+**Status:** accepted (supersedes “v1 does no FX”)
+
+**Context:** Overview hero picked one currency — the alphabetically first yearly total — so a 1000 MDL invoice hid Fitness USD and Streaming EUR from “Charged this month”. The mix bar and category widths compared numbers that were not in the same unit.
+
+**Decision:** Rows the user entered (list, upcoming, calendar) keep that subscription’s amount and currency. Metrics that have to add money — this month, per year, mix, by category — convert each integer minor-unit amount into `user.defaultCurrency` at today’s mid-market rate, then sum. Rates come from ExchangeRate-API’s open daily USD feed (`open.er-api.com/v6/latest/USD`), which includes MDL. The process caches by UTC date and keeps yesterday’s table if today’s fetch fails. The hourly reminder cron warms the cache. IEEE floats exist only when ingesting a rate into a 1e8 fixed-point integer; `mulDivRound` does the rest.
+
+**Why:** One headline that ignores other currencies looks like the last bill. Daily rates are enough for a tracker. A key-less feed fits Coolify (no new secret).
+
+**Consequences:** Do not convert the amount on a subscription row. Do not pick a “primary” currency for the hero when rates are available. If rates are missing, prefer `defaultCurrency` and still group leftovers by currency. Do not store historical rates per charge in v1.
 

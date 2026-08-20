@@ -47,9 +47,10 @@ Editing amount, cadence, interval, or the first-charge date recalculates `nextCh
 Signed-in home (and the demo home) shows:
 
 - **Next charges** — upcoming active subscriptions, soonest first
-- **This calendar month** — sum of actual charge amounts whose charge date falls in the current month (full invoice, not yearly ÷ 12)
-- **Yearly total** — normalized spend of all active subscriptions (see table below)
-- **By category** — both figures, grouped by category
+- **This calendar month** — sum of actual charge amounts whose charge date falls in the current month (full invoice, not yearly ÷ 12), converted into the user's `defaultCurrency` at today's rate when currencies mix
+- **Yearly total** — normalized spend of all active subscriptions (see table below), same conversion
+- **By category** — both figures, grouped by category, in `defaultCurrency` when converting
+- Individual subscription amounts (list, upcoming, calendar) stay in the currency the user entered
 
 Normalization for a single subscription, then summed:
 
@@ -60,7 +61,7 @@ Normalization for a single subscription, then summed:
 | `quarterly` | × 4 |
 | `yearly` | × 1 |
 
-Apply `intervalCount`: yearly factor is `multiplier / intervalCount` (every 2 months → `12 / 2 = 6` charges per year). The dashboard hero **this month** is not this number ÷ 12; it is the sum of invoices that land in the current calendar month. The yearly figure stays normalized.
+Apply `intervalCount`: yearly factor is `multiplier / intervalCount` (every 2 months → `12 / 2 = 6` charges per year). The dashboard hero **this month** is not this number ÷ 12; it is the sum of invoices that land in the current calendar month. The yearly figure stays normalized. When those invoices are in more than one currency, convert each amount into `defaultCurrency` at the current day's mid-market rate, then add. Do not convert the amount shown on a single subscription row.
 
 Paused and canceled rows do not count.
 
@@ -101,7 +102,7 @@ Email contains: subscription name, amount + currency, charge date, and the cance
 ## v2 — deferred
 
 - CSV import from a bank export
-- FX conversion using live or daily rates
+- Live (intraday) FX ticks — daily mid-market is in v1
 - Trend charts over time
 - Sharing a list with a partner
 - Tags (beyond a single category)

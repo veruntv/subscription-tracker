@@ -19,7 +19,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select } from "~/components/ui/select";
-import { formatCivil, todayUtcCivil } from "~/lib/domain/civil-date";
+import { civilFromIso, formatCivil, todayUtcCivil } from "~/lib/domain/civil-date";
 import {
   CADENCE_LABELS,
   CATEGORY_LABELS,
@@ -29,12 +29,16 @@ import {
   TIMEZONES,
   greetingForHour,
 } from "~/lib/domain/labels";
+import { fxCovers } from "~/lib/domain/fx";
 import { formatMinor } from "~/lib/domain/money";
 import {
   categoryMix,
   totalsByCategoryForCalendarMonth,
+  totalsByCategoryInCurrencyForCalendarMonth,
   totalsByCurrency,
   totalsByCurrencyForCalendarMonth,
+  totalsInCurrency,
+  totalsInCurrencyForCalendarMonth,
   upcomingCharges,
 } from "~/lib/domain/totals";
 import type { Subscription, SubscriptionInput, UserSettings } from "~/lib/domain/types";
@@ -131,12 +135,32 @@ export function TrackerApp({
   const settingsMut = api.settings.update.useMutation({
     onSuccess: () => void settingsQuery.refetch(),
   });
+  const fxQuery = api.fx.today.useQuery(undefined, {
+    enabled: accountReady,
+    staleTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   const items = accountReady ? (listQuery.data ?? []) : [];
   const settings: UserSettings = {
     timezone: settingsQuery.data?.timezone ?? "UTC",
     defaultCurrency: settingsQuery.data?.defaultCurrency ?? "USD",
   };
+  const target = settings.defaultCurrency;
+  const fx = fxQuery.data ?? null;
+  const usedCurrencies = useMemo(
+    () => [...new Set(items.filter((item) => item.status === "active").map((item) => item.currency))],
+    [items],
+  );
+  const foreign = usedCurrencies.some((code) => code !== target);
+  const canConvert = Boolean(
+    settingsQuery.data &&
+      fx &&
+      usedCurrencies.length > 0 &&
+      fxCovers([...usedCurrencies, target], fx),
+  );
+  const awaitingFx =
+    accountReady && (settingsQuery.isLoading || (foreign && fxQuery.isLoading));
 
   const yearlyTotals = useMemo(() => totalsByCurrency(items), [items]);
   const monthTotals = useMemo(
@@ -147,16 +171,46 @@ export function TrackerApp({
     () => totalsByCategoryForCalendarMonth(items, thisMonth.year, thisMonth.month),
     [items, thisMonth.month, thisMonth.year],
   );
+  const yearlyConverted = useMemo(
+    () => (canConvert && fx ? totalsInCurrency(items, target, fx) : null),
+    [canConvert, fx, items, target],
+  );
+  const monthConverted = useMemo(
+    () =>
+      canConvert && fx
+        ? totalsInCurrencyForCalendarMonth(items, target, fx, thisMonth.year, thisMonth.month)
+        : null,
+    [canConvert, fx, items, target, thisMonth.month, thisMonth.year],
+  );
+  const categoryConverted = useMemo(
+    () =>
+      canConvert && fx
+        ? totalsByCategoryInCurrencyForCalendarMonth(
+            items,
+            target,
+            fx,
+            thisMonth.year,
+            thisMonth.month,
+          )
+        : null,
+    [canConvert, fx, items, target, thisMonth.month, thisMonth.year],
+  );
   const upcoming = useMemo(() => upcomingCharges(items), [items]);
-  const primaryYear = yearlyTotals[0];
-  const primaryMonth = monthTotals.find((row) => row.currency === primaryYear?.currency) ?? monthTotals[0];
+  const primaryYear =
+    yearlyConverted ?? yearlyTotals.find((row) => row.currency === target) ?? yearlyTotals[0];
+  const primaryMonth =
+    monthConverted ??
+    monthTotals.find((row) => row.currency === (primaryYear?.currency ?? target)) ??
+    monthTotals[0];
+  const categoryRows = categoryConverted ?? categoryMonthTotals;
   const mix = useMemo(() => {
     const currency = primaryMonth?.currency ?? primaryYear?.currency;
     if (!currency) return [];
-    return categoryMix(categoryMonthTotals, currency).filter((row) => row.monthly > 0);
-  }, [categoryMonthTotals, primaryMonth?.currency, primaryYear?.currency]);
+    return categoryMix(categoryRows, currency).filter((row) => row.monthly > 0);
+  }, [categoryRows, primaryMonth?.currency, primaryYear?.currency]);
   const mixTotal = mix.reduce((sum, row) => sum + row.monthly, 0);
   const mixLabels = mix.filter((row) => row.category !== "remainder").slice(0, 3);
+  const fxAsOf = fx ? civilFromIso(fx.asOf) : null;
   const activeCount = items.filter((item) => item.status === "active").length;
   const filtered = items.filter((item) =>
     item.name.toLowerCase().includes(query.trim().toLowerCase()),
@@ -264,25 +318,52 @@ export function TrackerApp({
               <div>
                 <p className="text-sm text-muted">Charged this month</p>
                 <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight">
-                  {primaryMonth ? formatMinor(primaryMonth.monthly, primaryMonth.currency) : "—"}
+                  {awaitingFx
+                    ? "…"
+                    : primaryMonth
+                      ? formatMinor(primaryMonth.monthly, primaryMonth.currency)
+                      : "—"}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted">Per year</p>
                 <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">
-                  {primaryYear ? formatMinor(primaryYear.yearly, primaryYear.currency) : "—"}
+                  {awaitingFx
+                    ? "…"
+                    : primaryYear
+                      ? formatMinor(primaryYear.yearly, primaryYear.currency)
+                      : "—"}
                 </p>
-                {yearlyTotals.length > 1 ? (
+                {yearlyConverted && foreign && fxAsOf ? (
+                  <>
+                    <p className="mt-1 text-xs text-muted">
+                      Converted to {target} at {formatCivil(fxAsOf)} rates
+                    </p>
+                    {yearlyTotals.length > 1 ? (
+                      <p className="mt-0.5 text-xs tabular-nums text-muted">
+                        {yearlyTotals
+                          .map((row) => `${formatMinor(row.yearly, row.currency)} / yr`)
+                          .join(" · ")}
+                      </p>
+                    ) : null}
+                  </>
+                ) : yearlyTotals.length > 1 ? (
                   <p className="mt-1 text-xs tabular-nums text-muted">
                     {yearlyTotals
-                      .slice(1)
+                      .filter((row) => row.currency !== primaryYear?.currency)
                       .map((row) => `${formatMinor(row.yearly, row.currency)} / yr`)
                       .join(" · ")}
+                  </p>
+                ) : foreign && !canConvert ? (
+                  <p className="mt-1 text-xs text-muted">
+                    Could not load exchange rates — totals are per currency
                   </p>
                 ) : null}
               </div>
             </div>
-            {mix.length > 0 ? (
+            {awaitingFx ? (
+              <p className="mt-6 text-sm text-muted">Converting this month mix...</p>
+            ) : mix.length > 0 ? (
               <>
                 <div className="mt-6 flex h-2.5 gap-1 overflow-hidden rounded-full">
                   {mix.map((row) => (
@@ -345,10 +426,12 @@ export function TrackerApp({
           <article className="col-span-12 rounded-2xl bg-surface p-6 shadow-border">
             <p className="text-sm font-medium">By category</p>
             <ul className="mt-4 grid grid-cols-2 gap-x-10 gap-y-3">
-              {categoryMonthTotals.length === 0 ? (
+              {awaitingFx ? (
+                <li className="text-sm text-muted">Converting category totals…</li>
+              ) : categoryRows.length === 0 ? (
                 <li className="text-sm text-muted">No active subscriptions.</li>
               ) : (
-                categoryMonthTotals.map((row) => {
+                categoryRows.map((row) => {
                   const share =
                     primaryYear && primaryYear.yearly > 0 ? row.yearly / primaryYear.yearly : 0;
                   return (

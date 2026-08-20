@@ -12,7 +12,7 @@ Web app: list of recurring charges, monthly/yearly totals, category mix, month c
 
 \- Signed in → tracker (src/components/tracker-app.tsx) with tabs Overview / Calendar / Subscriptions
 
-\- No demo mode. No localStorage list. No CSV, FX, charts, partner sharing, bank APIs, payments, native apps
+\- No demo mode. No localStorage list. No CSV, charts, partner sharing, bank APIs, payments, native apps. Mixed-currency dashboard totals convert to defaultCurrency at a daily rate.
 
 \- Desktop-primary. Do not design mobile-first
 

@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import type { FxTable } from "~/lib/domain/fx";
 import type { Subscription } from "~/lib/domain/types";
 import {
   categoryMix,
   totalsByCategoryForCalendarMonth,
+  totalsByCategoryInCurrencyForCalendarMonth,
   totalsByCurrencyForCalendarMonth,
+  totalsInCurrency,
+  totalsInCurrencyForCalendarMonth,
   type CategoryTotals,
 } from "~/lib/domain/totals";
 
@@ -91,5 +95,96 @@ describe("calendar-month totals", () => {
     const fitness = cats.find((row) => row.category === "fitness");
     expect(hosting).toMatchObject({ monthly: 0, yearly: 328 });
     expect(fitness).toMatchObject({ monthly: 11999, yearly: 11999 });
+  });
+});
+
+/** 1 USD = 0.86 EUR = 17 MDL. */
+function fx(): FxTable {
+  const scale = 100_000_000;
+  return {
+    base: "USD",
+    asOf: "2026-08-20",
+    scale,
+    quotes: {
+      USD: scale,
+      EUR: 86_000_000,
+      MDL: 1_700_000_000,
+    },
+  };
+}
+
+describe("totals converted to default currency", () => {
+  const apple = sub({
+    id: "apple",
+    amount: 1199,
+    currency: "EUR",
+    cadence: "monthly",
+    startedAt: { year: 2026, month: 8, day: 19 },
+    category: "streaming",
+  });
+  const rent = sub({
+    id: "rent",
+    amount: 100_000,
+    currency: "MDL",
+    cadence: "monthly",
+    startedAt: { year: 2026, month: 8, day: 22 },
+    category: "other",
+  });
+  const gym = sub({
+    id: "gym",
+    amount: 12_327,
+    currency: "USD",
+    cadence: "yearly",
+    startedAt: { year: 2026, month: 8, day: 19 },
+    category: "fitness",
+  });
+
+  it("sums this month across currencies into the default, not the first currency only", () => {
+    const month = totalsInCurrencyForCalendarMonth([apple, rent, gym], "EUR", fx(), 2026, 8);
+    // 11.99 EUR + 50.59 EUR (1000 MDL) + 106.01 EUR (123.27 USD) = 168.59 EUR
+    expect(month).toEqual({ currency: "EUR", monthly: 16859, yearly: 85695 });
+  });
+
+  it("merges categories after conversion so mix bars share one scale", () => {
+    const cats = totalsByCategoryInCurrencyForCalendarMonth(
+      [apple, rent, gym],
+      "EUR",
+      fx(),
+      2026,
+      8,
+    );
+    expect(cats.map((row) => row.category)).toEqual(["other", "streaming", "fitness"]);
+    expect(cats.every((row) => row.currency === "EUR")).toBe(true);
+    expect(cats.find((row) => row.category === "other")?.monthly).toBe(5059);
+    expect(cats.find((row) => row.category === "streaming")?.monthly).toBe(1199);
+    expect(cats.find((row) => row.category === "fitness")?.monthly).toBe(10601);
+  });
+
+  it("folds the same category from two currencies into one converted row", () => {
+    const extraOther = sub({
+      id: "tip",
+      amount: 1000,
+      currency: "USD",
+      cadence: "monthly",
+      startedAt: { year: 2026, month: 8, day: 10 },
+      category: "other",
+    });
+    const cats = totalsByCategoryInCurrencyForCalendarMonth(
+      [rent, extraOther],
+      "EUR",
+      fx(),
+      2026,
+      8,
+    );
+    expect(cats).toHaveLength(1);
+    expect(cats[0]).toMatchObject({ category: "other", currency: "EUR" });
+    // 1000 MDL → 50.59 EUR; 10.00 USD → 8.60 EUR
+    expect(cats[0]?.monthly).toBe(5919);
+  });
+
+  it("normalizes yearly run-rate into the default currency", () => {
+    const year = totalsInCurrency([apple, rent], "EUR", fx());
+    // apple 143.88 EUR/yr; 12000 MDL/yr → 607.06 EUR. monthly = yearly/12
+    expect(year).toEqual({ currency: "EUR", monthly: 6258, yearly: 75094 });
   });
 });

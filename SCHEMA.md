@@ -29,7 +29,7 @@ Auth.js also creates `account`, `session`, and `verificationToken` (names follow
 | `userId` | `text` | not null, FK → `user.id` on delete cascade | |
 | `name` | `text` | not null | |
 | `amount` | `integer` | not null, `> 0` | Minor units (cents, pence, …) |
-| `currency` | `char(3)` | not null | ISO 4217. No FX in v1 |
+| `currency` | `char(3)` | not null | ISO 4217. Stored as entered; dashboard sums convert at read time |
 | `cadence` | `text` | not null, check ∈ (`weekly`, `monthly`, `quarterly`, `yearly`) | |
 | `intervalCount` | `integer` | not null, default `1`, `>= 1` | Every N cadences |
 | `anchorDay` | `integer` | not null | See [Anchor day](#anchor-day) |
@@ -91,4 +91,4 @@ There is no demo user row. Demo data does not live in these tables.
 
 ## Money
 
-`amount` is an integer in the currency's minor units (ISO 4217 exponent: USD/EUR = 100, JPY = 1). Display divides by `10^exponent`. Never convert with floats. v1 does not convert between currencies — dashboard sums are per currency, or the UI groups by `currency` when a user has more than one.
+`amount` is an integer in the currency's minor units (ISO 4217 exponent: USD/EUR = 100, JPY = 1). Display divides by `10^exponent`. Never convert with floats on the amount itself. Dashboard aggregates convert through a scaled integer rate (see `DECISIONS.md`); the subscription row keeps this currency.
