@@ -46,7 +46,7 @@ describe("categoryMix", () => {
     expect(mix.map((s) => s.category)).toEqual(["fitness", "streaming", "hosting", "software"]);
   });
 
-  it("folds the tail into remainder past four categories", () => {
+  it("keeps every category instead of folding a second Other", () => {
     const mix = categoryMix(
       [
         row("fitness", 2900),
@@ -54,11 +54,19 @@ describe("categoryMix", () => {
         row("hosting", 1500),
         row("software", 800),
         row("news", 300),
+        row("other", 400),
       ],
       "EUR",
     );
-    expect(mix).toHaveLength(4);
-    expect(mix[3]).toMatchObject({ category: "remainder", monthly: 1100 });
+    expect(mix.map((s) => s.category)).toEqual([
+      "fitness",
+      "streaming",
+      "hosting",
+      "software",
+      "news",
+      "other",
+    ]);
+    expect(mix.some((s) => s.category === "remainder")).toBe(false);
   });
 
   it("ignores other currencies", () => {

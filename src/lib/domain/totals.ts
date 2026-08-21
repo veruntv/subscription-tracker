@@ -110,31 +110,15 @@ export function totalsByCurrencyForCalendarMonth(
 export function categoryMix(
   rows: readonly CategoryTotals[],
   currency: string,
-  namedLimit = 3,
-  field: "monthly" | "yearly" = "monthly",
 ): MixSegment[] {
-  const ofCurrency = rows.filter((row) => row.currency === currency);
-  const showAll = ofCurrency.length <= namedLimit + 1;
-  const named = showAll ? ofCurrency : ofCurrency.slice(0, namedLimit);
-  const tail = showAll ? [] : ofCurrency.slice(namedLimit);
-  const restYearly = tail.reduce((sum, row) => sum + row.yearly, 0);
-  const restMonthly = tail.reduce((sum, row) => sum + row.monthly, 0);
-  const restWeight = field === "yearly" ? restYearly : restMonthly;
-  const segments: MixSegment[] = named.map((row) => ({
-    key: `${row.category}:${row.currency}`,
-    category: row.category,
-    monthly: row.monthly,
-    yearly: row.yearly,
-  }));
-  if (restWeight > 0) {
-    segments.push({
-      key: `remainder:${currency}`,
-      category: "remainder",
-      monthly: restMonthly,
-      yearly: restYearly,
-    });
-  }
-  return segments;
+  return rows
+    .filter((row) => row.currency === currency)
+    .map((row) => ({
+      key: `${row.category}:${row.currency}`,
+      category: row.category,
+      monthly: row.monthly,
+      yearly: row.yearly,
+    }));
 }
 
 export function totalsInCurrency(
