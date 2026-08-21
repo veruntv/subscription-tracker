@@ -225,7 +225,10 @@ export function TrackerApp({
   const mix = useMemo(() => {
     const currency = primaryMonth?.currency ?? primaryYear?.currency;
     if (!currency) return [];
-    return categoryMix(categoryRows, currency).filter((row) => row.monthly > 0);
+    return categoryMix(categoryRows, currency)
+      .filter((row) => row.monthly > 0)
+      .slice()
+      .sort((a, b) => b.monthly - a.monthly);
   }, [categoryRows, primaryMonth?.currency, primaryYear?.currency]);
   const mixTotal = mix.reduce((sum, row) => sum + row.monthly, 0);
   const mixLabels = mix;
@@ -371,8 +374,9 @@ export function TrackerApp({
               </div>
             </div>
             <p className="mt-4 text-xs leading-relaxed text-muted">
-              This month is invoices that land in this calendar month. Per year is the
-              typical 12-month run-rate, not this month × 12.
+              This month is what actually bills in this month. Per year is what the whole
+              list costs over a year — a yearly charge counts here even in months it does
+              not bill.
             </p>
             {yearlyConverted && foreign && fxAsOf ? (
               <p className="mt-1 text-xs text-muted">
