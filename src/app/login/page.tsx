@@ -61,7 +61,7 @@ function LoginForm() {
 
   return (
     <main className="min-h-screen bg-bg text-fg">
-      <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-10">
+      <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-4 py-10 sm:px-10">
         {sentTo ? (
           <>
             <SentState
@@ -86,7 +86,7 @@ function LoginForm() {
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">
               {signup ? "Get started" : "Account"}
             </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
               {signup ? "Create an account" : "Sign in"}
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-muted">
@@ -155,7 +155,7 @@ function SentState({
       <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">
         {signup ? "Get started" : "Account"}
       </p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight">Check your email</h1>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Check your email</h1>
       <div className="mt-8 rounded-2xl bg-surface p-6 shadow-border">
         <div className="flex size-12 items-center justify-center rounded-full bg-accent">
           <MailCheck className="size-6 text-ink" aria-hidden />

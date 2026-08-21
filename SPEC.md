@@ -2,7 +2,7 @@
 
 Web application for tracking recurring charges (Netflix, gym, hosting). A user keeps one list of subscriptions, sees what is due next, understands monthly and yearly spend, and gets an email N days before each charge.
 
-**Platform:** web only, designed for desktop browsers. No native iOS/Android apps, no wrappers (React Native, Capacitor, Expo). Do not design mobile-first or treat a phone viewport as the primary layout.
+**Platform:** web only. Desktop is the designed canvas; the same pages stack for tablet and phone. No native iOS/Android apps, no wrappers (React Native, Capacitor, Expo). Do not treat a phone viewport as the primary layout.
 
 ## Goals
 
@@ -122,5 +122,5 @@ Email contains: subscription name, amount + currency, charge date, and the cance
 - A user with timezone `Europe/Chisinau` and `notifyDaysBefore = 3` gets one email at local 09:00, three days before the charge
 - Retrying the cron does not send a second email for the same `(subscription, charge date)`
 - Signed-out visitors see the landing page; the tracker is only after sign-in
-- Layout is designed for a desktop browser (dashboard + calendar side by side is fine). A narrow window may be usable, but it is not a target
+- Layout is designed for a desktop browser (dashboard + calendar side by side is fine). A phone or tablet stacks the same screens and must not overflow sideways except the calendar grid, which may scroll horizontally
 - Web only — no native shell required to complete any v1 flow

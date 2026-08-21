@@ -8,9 +8,9 @@ import { CATEGORY_TONES } from "~/lib/domain/labels";
 export function Landing() {
   return (
     <div className="min-h-screen bg-bg text-fg">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-10 py-6">
-        <p className="text-sm font-semibold tracking-tight">Subscription Tracker</p>
-        <div className="flex items-center gap-3">
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-10 sm:py-6">
+        <p className="min-w-0 truncate text-sm font-semibold tracking-tight">Subscription Tracker</p>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Button asChild variant="ghost">
             <Link href="/login">Sign in</Link>
           </Button>
@@ -20,11 +20,11 @@ export function Landing() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-10 pb-24">
-        <section className="grid grid-cols-12 items-center gap-12 pt-10">
-          <div className="col-span-5">
+      <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-10">
+        <section className="grid grid-cols-1 items-center gap-10 pt-6 lg:grid-cols-12 lg:gap-12 lg:pt-10">
+          <div className="lg:col-span-5">
             <p className="text-sm text-muted">Recurring charges, in one list</p>
-            <h1 className="mt-3 text-5xl font-semibold tracking-tight">
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">
               See the charge before it leaves the account.
             </h1>
             <p className="mt-5 max-w-md text-base leading-relaxed text-muted">
@@ -32,7 +32,7 @@ export function Landing() {
               it costs per year, the dates on a calendar, and an email a few days
               before.
             </p>
-            <div className="mt-8 flex items-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild>
                 <Link href="/login?intent=signup">Create an account</Link>
               </Button>
@@ -42,12 +42,12 @@ export function Landing() {
             </div>
           </div>
 
-          <div className="col-span-7">
+          <div className="min-w-0 lg:col-span-7">
             <ProductMock />
           </div>
         </section>
 
-        <section className="mt-24 grid grid-cols-3 gap-6">
+        <section className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3 lg:mt-24">
           <Step
             n="01"
             title="Add what you pay"
@@ -65,7 +65,7 @@ export function Landing() {
           />
         </section>
 
-        <section className="mt-20 grid grid-cols-2 gap-6">
+        <section className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:mt-20">
           <article className="rounded-2xl bg-surface p-8 shadow-border">
             <p className="text-sm text-muted">Calendar</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -86,7 +86,7 @@ export function Landing() {
           </article>
         </section>
 
-        <section className="mt-20 rounded-2xl bg-grape px-12 py-14 text-lilac">
+        <section className="mt-12 rounded-2xl bg-grape px-6 py-10 text-lilac sm:px-12 sm:py-14 lg:mt-20">
           <p className="text-sm text-thistle">No bank login. No payments.</p>
           <h2 className="mt-3 max-w-xl text-3xl font-semibold tracking-tight">
             You keep the list. We don&apos;t touch the bank.
@@ -116,13 +116,13 @@ function ProductMock() {
   return (
     <div className="rounded-2xl bg-surface p-6 shadow-border">
       <p className="text-sm text-muted">Charged this month</p>
-      <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight">73.39 EUR</p>
+      <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight sm:text-5xl">73.39 EUR</p>
       <div className="mt-6 flex h-2.5 gap-1 overflow-hidden rounded-full">
         <span className={`h-full min-w-1 ${CATEGORY_TONES.fitness.bg}`} style={{ flexGrow: 4 }} />
         <span className={`h-full min-w-1 ${CATEGORY_TONES.streaming.bg}`} style={{ flexGrow: 3 }} />
         <span className={`h-full min-w-1 ${CATEGORY_TONES.hosting.bg}`} style={{ flexGrow: 2 }} />
       </div>
-      <p className="mt-3 flex gap-4 text-xs text-muted">
+      <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
         <span className="inline-flex items-center gap-1.5">
           <span className={`size-2 rounded-full ${CATEGORY_TONES.fitness.bg}`} />
           Fitness <span className="text-fg">29.99</span>

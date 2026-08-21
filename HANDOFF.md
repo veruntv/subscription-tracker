@@ -11,7 +11,7 @@ Web app: list of recurring charges, monthly/yearly totals, category mix, month c
 - Signed out → marketing landing (`src/components/landing.tsx`)
 - Signed in → tracker (`src/components/tracker-app.tsx`) with tabs Overview / Calendar / Subscriptions
 - **No demo mode.** No localStorage list. No CSV, charts, partner sharing, bank APIs, payments, native apps. Dashboard totals convert mixed currencies into `defaultCurrency` at a daily rate; rows keep the entered currency.
-- Desktop-primary. Do not design mobile-first
+- Desktop-primary canvas. Phone/tablet get a stacked layout (see DECISIONS 2026-08-21). Do not design mobile-first or add a native app
 - Auth: **magic link only** (Resend). No password, no OTP. Session **30 days**, database strategy when `DATABASE_URL` is set. Sign up = sign in (same email)
 
 ## Live infra (2026-08-19)
