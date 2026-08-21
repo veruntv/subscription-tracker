@@ -1,6 +1,6 @@
 import "~/styles/globals.css";
 
-import { type Metadata } from "next";
+import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 import type { ReactNode } from "react";
 
@@ -8,6 +8,11 @@ import { PreviewHostBridge } from "~/components/preview-host-bridge";
 import { TRPCReactProvider } from "~/trpc/react";
 
 const APP_NAME = "Subscription Tracker";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: APP_NAME,

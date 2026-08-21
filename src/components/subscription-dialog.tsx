@@ -144,12 +144,12 @@ export function SubscriptionDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-fg/30 p-8">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-fg/30 p-0 sm:items-center sm:p-8">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="subscription-dialog-title"
-        className="w-full max-w-xl rounded-2xl bg-surface p-6 shadow-border"
+        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-2xl bg-surface p-5 shadow-border sm:rounded-2xl sm:p-6"
       >
         <h2 id="subscription-dialog-title" className="font-display text-2xl tracking-tight">
           {initial ? "Edit subscription" : "Add subscription"}
@@ -161,7 +161,7 @@ export function SubscriptionDialog({
             if (!pending) submit();
           }}
         >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="col-span-2 space-y-1.5">
             <Label htmlFor="name">Name</Label>
             <BrandNameField

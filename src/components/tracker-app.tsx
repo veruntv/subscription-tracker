@@ -283,14 +283,36 @@ export function TrackerApp({
   }, [needsOnboarding]);
 
   return (
-    <div className="flex min-h-screen bg-bg text-fg">
-      <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col bg-sidebar px-4 py-6 text-surface">
-        <div className="px-2">
-          <p className="text-sm font-semibold tracking-tight">Subscription Tracker</p>
-          <p className="mt-1 text-xs text-sidebar-muted">Recurring charges, in one place</p>
+    <div className="flex min-h-screen flex-col bg-bg text-fg lg:flex-row">
+      <aside className="sticky top-0 z-40 flex w-full shrink-0 flex-col bg-sidebar px-3 py-3 text-surface lg:h-screen lg:w-60 lg:px-4 lg:py-6">
+        <div className="flex items-center justify-between gap-3 px-1 lg:block lg:px-2">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold tracking-tight">Subscription Tracker</p>
+            <p className="mt-1 hidden text-xs text-sidebar-muted lg:block">Recurring charges, in one place</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1 lg:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-surface hover:bg-surface/10 hover:text-surface"
+              aria-label="Settings"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-surface hover:bg-surface/10 hover:text-surface"
+              aria-label="Sign out"
+              onClick={() => void signOut({ callbackUrl: "/" })}
+            >
+              <LogOut />
+            </Button>
+          </div>
         </div>
 
-        <nav className="mt-8 space-y-1">
+        <nav className="mt-3 flex gap-1 overflow-x-auto lg:mt-8 lg:flex-col lg:space-y-1 lg:overflow-visible">
           {TABS.map((item) => (
             <SideLink
               key={item.id}
@@ -302,7 +324,7 @@ export function TrackerApp({
           ))}
         </nav>
 
-        <div className="mt-auto space-y-2">
+        <div className="mt-auto hidden space-y-2 lg:block">
           {email ? <p className="truncate px-2 text-xs text-sidebar-muted">{email}</p> : null}
           <Button
             variant="ghost"
@@ -323,17 +345,17 @@ export function TrackerApp({
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 px-10 py-8">
-        <header className="flex items-end justify-between gap-6">
-          <div>
+      <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-10 lg:py-8">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
             <p className="text-sm text-muted">{greetingForHour(hour)}</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
               {tab === "overview" && "Your recurring spend"}
               {tab === "calendar" && "Calendar"}
               {tab === "list" && "Subscriptions"}
             </h1>
           </div>
-          <Button onClick={openCreate}>
+          <Button onClick={openCreate} className="shrink-0 self-start sm:self-auto">
             <Plus />
             Add subscription
           </Button>
@@ -349,12 +371,12 @@ export function TrackerApp({
         ) : null}
 
         {tab === "overview" ? (
-        <section className="mt-6 grid grid-cols-12 gap-5">
-          <article className="col-span-6 rounded-2xl bg-surface p-7 shadow-border">
+        <section className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-12">
+          <article className="rounded-2xl bg-surface p-5 shadow-border sm:p-7 lg:col-span-6">
             <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
               <div>
                 <p className="text-sm text-muted">Charged this month</p>
-                <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight">
+                <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight sm:text-5xl">
                   {awaitingFx
                     ? "…"
                     : primaryMonth
@@ -364,7 +386,7 @@ export function TrackerApp({
               </div>
               <div>
                 <p className="text-sm text-muted">Per year</p>
-                <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">
+                <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight sm:text-3xl">
                   {awaitingFx
                     ? "…"
                     : primaryYear
@@ -435,7 +457,7 @@ export function TrackerApp({
             <p className="mt-5 text-xs text-muted">{activeCount} active</p>
           </article>
 
-          <article className="col-span-6 rounded-2xl bg-surface p-6 shadow-border">
+          <article className="rounded-2xl bg-surface p-5 shadow-border sm:p-6 lg:col-span-6">
             <p className="text-sm font-medium">Upcoming</p>
             <ul className="mt-4 space-y-3">
               {listQuery.isLoading ? (
@@ -461,9 +483,9 @@ export function TrackerApp({
             </ul>
           </article>
 
-          <article className="col-span-12 rounded-2xl bg-surface p-6 shadow-border">
+          <article className="rounded-2xl bg-surface p-5 shadow-border sm:p-6 lg:col-span-12">
             <p className="text-sm font-medium">By category</p>
-            <ul className="mt-4 grid grid-cols-2 gap-x-10 gap-y-3">
+            <ul className="mt-4 grid grid-cols-1 gap-x-10 gap-y-3 md:grid-cols-2">
               {listQuery.isLoading || awaitingFx ? (
                 <li className="text-sm text-muted">
                   {listQuery.isLoading ? "Loading your list…" : "Converting category totals…"}
@@ -526,8 +548,8 @@ export function TrackerApp({
         ) : null}
 
         {tab === "list" ? (
-        <section className="mt-6 rounded-2xl bg-surface p-6 shadow-border">
-          <header className="mb-5 flex items-center justify-between gap-4">
+        <section className="mt-6 rounded-2xl bg-surface p-4 shadow-border sm:p-6">
+          <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div>
               <p className="text-sm text-muted">All charges</p>
               <h2 className="text-xl font-semibold tracking-tight">Your list</h2>
@@ -536,12 +558,12 @@ export function TrackerApp({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search bills and subscriptions"
-              className="max-w-sm rounded-full"
+              className="w-full rounded-full sm:max-w-sm"
             />
           </header>
 
-          <div className="overflow-visible rounded-xl border border-border">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full min-w-[36rem] text-left text-sm">
               <thead className="bg-bg text-xs font-medium text-muted">
                 <tr>
                   <th className="px-4 py-3">Name / frequency</th>
@@ -721,7 +743,7 @@ function SideLink({
       onClick={onClick}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors duration-150",
+        "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm transition-colors duration-150 lg:w-full",
         active
           ? "bg-surface/12 text-surface"
           : "text-sidebar-muted hover:bg-surface/10 hover:text-surface",
@@ -756,8 +778,8 @@ function SettingsDialog({
   const [defaultCurrency, setDefaultCurrency] = useState(settings.defaultCurrency);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-8">
-      <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-border">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4 sm:p-8">
+      <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-surface p-5 shadow-border sm:p-6">
         <h2 id="settings-title" className="text-xl font-semibold tracking-tight">
           {required ? "Timezone and currency" : "Settings"}
         </h2>

@@ -14,7 +14,7 @@ Web app: list of recurring charges, monthly/yearly totals, category mix, month c
 
 \- No demo mode. No localStorage list. No CSV, charts, partner sharing, bank APIs, payments, native apps. Mixed-currency dashboard totals convert to defaultCurrency at a daily rate.
 
-\- Desktop-primary. Do not design mobile-first
+\- Desktop-primary canvas. Phone/tablet stack. Do not design mobile-first or add a native app
 
 \- Auth: magic link only (Resend). No password, no OTP. Session 30 days, database strategy when DATABASE_URL is set. Sign up = sign in (same email)
 

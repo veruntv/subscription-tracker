@@ -123,7 +123,21 @@ Monthly dashboard figure = yearly / 12.
 
 **Why:** The calendar, category breakdown, and upcoming-charges list are denser and clearer on a wide screen. Optimizing for a phone first would constrain the dashboard we actually need.
 
-**Consequences:** Multi-column layouts are allowed and expected. A stacked/narrow fallback is optional, not required. Do not block a release on mobile QA. Pointer/hover affordances (tables, side panels, date grids) are the default, not an enhancement.
+**Consequences:** Multi-column layouts are allowed and expected. Pointer/hover affordances (tables, side panels, date grids) stay the desktop default. Narrow fallback is now required — see 2026-08-21.
+
+---
+
+## 2026-08-21 — Usable phone and tablet layout
+
+**Status:** accepted (narrows “Desktop-primary UI”)
+
+**Context:** v1 shipped desktop-only. The user uses the tracker from a phone and tablet; the grape sidebar and 12-column dashboard overflow and look broken. They asked to fix this before v2.
+
+**Decision:** Keep desktop (~1280px+) as the designed canvas. Below `lg`, stack: top bar + horizontal tabs, single-column overview, list and calendar may scroll sideways. Same routes and components — no native app.
+
+**Why:** One web app. A stacked CSS fallback is enough. Mobile-first redesign would fight the dashboard we already have.
+
+**Consequences:** Do not drop the sidebar on desktop. Do not add a separate mobile site. Calendar cells stay seven columns; on a phone the grid scrolls horizontally rather than stretching day 31.
 
 ---
 

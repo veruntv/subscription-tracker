@@ -63,7 +63,7 @@ export function MonthCalendar({
     .sort((a, b) => a.date.day - b.date.day || a.item.name.localeCompare(b.item.name));
 
   return (
-    <section id="calendar" className="rounded-2xl bg-surface p-6 shadow-border">
+    <section id="calendar" className="rounded-2xl bg-surface p-4 shadow-border sm:p-6">
       <header className="mb-5 flex items-center justify-between">
         <div>
           <p className="text-sm text-muted">Calendar</p>
@@ -79,7 +79,8 @@ export function MonthCalendar({
         </div>
       </header>
 
-      <div className="overflow-hidden rounded-xl border border-border">
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <div className="min-w-[36rem] overflow-hidden rounded-xl border border-border">
         <div className="grid grid-cols-7 border-b border-border bg-bg text-center text-xs font-medium text-muted">
           {WEEKDAYS.map((day) => (
             <div key={day} className="px-2 py-2">
@@ -93,7 +94,7 @@ export function MonthCalendar({
               return (
                 <div
                   key={`blank-${index}`}
-                  className="min-h-28 border-b border-r border-border bg-bg/40 [&:nth-child(7n)]:border-r-0"
+                  className="min-h-20 border-b border-r border-border bg-bg/40 sm:min-h-28 [&:nth-child(7n)]:border-r-0"
                 />
               );
             }
@@ -109,7 +110,7 @@ export function MonthCalendar({
               <div
                 key={cell.day}
                 className={cn(
-                  "min-h-28 min-w-0 border-b border-r border-border p-2 [&:nth-child(7n)]:border-r-0",
+                  "min-h-20 min-w-0 border-b border-r border-border p-1.5 sm:min-h-28 sm:p-2 [&:nth-child(7n)]:border-r-0",
                   isToday && "bg-accent-soft",
                   !isToday && hasCharge && "bg-charge",
                   !isToday && !hasCharge && "bg-surface",
@@ -149,6 +150,7 @@ export function MonthCalendar({
             );
           })}
         </div>
+      </div>
       </div>
 
       <ul className="mt-5 divide-y divide-border">
