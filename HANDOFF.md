@@ -27,7 +27,7 @@ Web app: list of recurring charges, monthly/yearly totals, category mix, month c
 | Postgres | Coolify resource `tracker-db`, image `postgres:18-alpine`, user/db `postgres` |
 | DNS | Namecheap, domain `vera-automation.online`. A `@` and `www` → `91.99.124.215` |
 | Mail | Resend, region **Ireland**. Domain `vera-automation.online`: DKIM + SPF TXT `send` + MX `send` **Verified** (2026-08-20). Namecheap MX is **Mail Settings → Custom MX** (Host Records Type has no MX). Enable Receiving off |
-| Cron | **Not set yet.** Do not use Vercel Cron. Coolify scheduled task should `curl` `/api/cron/reminders` hourly with `CRON_SECRET` |
+| Cron | Coolify scheduled task hourly: `curl` `/api/cron/reminders` with `CRON_SECRET`. Do not use Vercel Cron. |
 
 User (Ilya / Vera in Coolify): works **only in the browser**. This Windows machine has Node, git, and **GitHub CLI already logged in as `veruntv`** (`repo` scope, credential helper `gh auth git-credential`). Push with `git push`; do **not** ask her for a GitHub token. Never commit secrets. Never ask her to run git locally.
 
@@ -68,16 +68,16 @@ Pale lilac canvas `#F4EFF7`, grape sidebar `#44355B`, lime accent **only** `#D6F
 - Landing live on HTTPS domain
 - Tracker UI (CRUD, dashboard, calendar, tabs) in code
 - Postgres up, schema pushed
-- Auth.js + Resend wired; domain sending **Verified**. Try Get started after Coolify Restart.
-- Git history on `main` (latest local session also has unpushed 30-day session + `page.tsx` auth isolation — **check `git status` before assuming GitHub is newest**)
+- Auth.js + Resend wired; domain sending **Verified**. Magic-link login and reminder mail both work.
+- Hourly Coolify cron for `/api/cron/reminders`. Postgres backup on `tracker-db`.
+- Sign out, empty state, first-run timezone/currency, phone/tablet stacked layout.
+- Git history on `main`. Check `git status` before assuming GitHub is newest.
 
-## What to do next (order)
+## What to do next
 
-1. Coolify Restart → Get started → `vernovicova@gmail.com` (spam too). EMAIL_FROM `Subscription Tracker <noreply@vera-automation.online>`
-3. Push any unpushed commits (`gh` on this machine is already authenticated as `veruntv`)
-4. Coolify cron hourly: `curl -fsS -H "Authorization: Bearer CRON_SECRET" https://vera-automation.online/api/cron/reminders`
-5. Sign out button, empty state after first login, Postgres backup in Coolify
-6. Optional nicer domain later — add in Coolify + Namecheap A record; keep this one
+Reminder visibility in the UI — the email already goes out; the list does not show that it went. Do not add partner sharing or live FX.
+
+Optional later: nicer domain in Coolify + Namecheap A record.
 
 ## Pitfalls already paid for
 

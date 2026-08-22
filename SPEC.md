@@ -44,7 +44,7 @@ Editing amount, cadence, interval, or the first-charge date recalculates `nextCh
 
 ### Dashboard
 
-Signed-in home (and the demo home) shows:
+Signed-in home shows:
 
 - **Next charges** — upcoming active subscriptions, soonest first
 - **This calendar month** — sum of actual charge amounts whose charge date falls in the current month (full invoice, not yearly ÷ 12), converted into the user's `defaultCurrency` at today's rate when currencies mix
