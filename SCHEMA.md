@@ -1,6 +1,6 @@
 # Schema
 
-Postgres (Neon in production). Auth.js owns the auth tables; this file documents the columns we rely on and the application tables.
+Postgres (Coolify `tracker-db` in production). Auth.js owns the auth tables; this file documents the columns we rely on and the application tables.
 
 All timestamps are `timestamptz` stored in UTC. Date-only values (`forChargeDate`) are a calendar date, not a time. Money is never `numeric` / `float`.
 

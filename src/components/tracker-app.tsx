@@ -28,6 +28,7 @@ import {
   STATUS_LABELS,
   TIMEZONES,
   greetingForHour,
+  OVERVIEW_HERO_CAPTION,
 } from "~/lib/domain/labels";
 import { fxCovers } from "~/lib/domain/fx";
 import { formatMinor } from "~/lib/domain/money";
@@ -395,11 +396,7 @@ export function TrackerApp({
                 </p>
               </div>
             </div>
-            <p className="mt-4 text-xs leading-relaxed text-muted">
-              This month is what actually bills in this month. Per year is what the whole
-              list costs over a year — a yearly charge counts here even in months it does
-              not bill.
-            </p>
+            <p className="mt-4 text-xs leading-relaxed text-muted">{OVERVIEW_HERO_CAPTION}</p>
             {yearlyConverted && foreign && fxAsOf ? (
               <p className="mt-1 text-xs text-muted">
                 Both figures converted to {target} at {formatCivil(fxAsOf)} rates. Rows stay

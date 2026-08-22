@@ -66,3 +66,6 @@ export function greetingForHour(hour: number): string {
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
+
+export const OVERVIEW_HERO_CAPTION =
+  "This month = invoices that bill this month. Per year = the yearly cost of the list, including yearly charges in months they do not bill.";

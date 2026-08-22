@@ -36,7 +36,7 @@ Web app: list of recurring charges, monthly/yearly totals, category mix, month c
 
 \- Mail: Resend, region Ireland. DKIM Verified. SPF/MX on host send often Pending — Namecheap Host Records has no MX type
 
-\- Cron: not set yet. Coolify scheduled curl to <https://vera-automation.online/api/cron/reminders> with CRON_SECRET. Not Vercel Cron.
+\- Cron: Coolify hourly curl to <https://vera-automation.online/api/cron/reminders> with CRON_SECRET. Not Vercel Cron.
 
 User works only in the browser. No local Node. Push via GitHub classic token (repo), then she deletes the token. Never commit secrets.
 
@@ -82,15 +82,7 @@ Canvas #F4EFF7, sidebar #44355B, lime accent only #D6F24C (CTA + today). Mix/ico
 
 \## Next
 
-1\. Wait Resend SPF TXT on send = Verified. Try magic link anyway with Full-access key.
-
-2\. Coolify Restart → Get started → [vernovicova@gmail.com](mailto:vernovicova@gmail.com) (spam too)
-
-3\. Push unpushed commits if git status is dirty (30-day session may not be on GitHub yet)
-
-4\. Hourly cron in Coolify
-
-5\. Sign out, empty state, Postgres backup
+Reminder visibility in the UI. Emails already send; the list does not show last sent. No partner sharing.
 
 \## Pitfalls
 
