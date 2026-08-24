@@ -19,7 +19,8 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select } from "~/components/ui/select";
-import { civilFromIso, compareCivil, formatCivil, todayInZone } from "~/lib/domain/civil-date";
+import { civilFromIso, civilToIso, compareCivil, formatCivil, todayInZone } from "~/lib/domain/civil-date";
+import { reminderSentCopy } from "~/lib/domain/reminders";
 import {
   CADENCE_LABELS,
   CATEGORY_LABELS,
@@ -215,7 +216,7 @@ export function TrackerApp({
         : null,
     [canConvert, fx, items, target, thisMonth.month, thisMonth.year],
   );
-  const upcoming = useMemo(() => upcomingCharges(items), [items]);
+  const upcoming = useMemo(() => upcomingCharges(items, today), [items, today]);
   const primaryYear =
     yearlyConverted ?? yearlyTotals.find((row) => row.currency === target) ?? yearlyTotals[0];
   const primaryMonth =
@@ -456,24 +457,40 @@ export function TrackerApp({
 
           <article className="rounded-2xl bg-surface p-5 shadow-border sm:p-6 lg:col-span-6">
             <p className="text-sm font-medium">Upcoming</p>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 space-y-1">
               {listQuery.isLoading ? (
-                <li className="text-sm text-muted">Loading your list…</li>
+                <li className="px-1 py-2 text-sm text-muted">Loading your list…</li>
               ) : upcoming.length === 0 ? (
-                <li className="text-sm text-muted">Nothing due soon.</li>
+                <li className="px-1 py-2 text-sm text-muted">Nothing due soon.</li>
               ) : (
-                upcoming.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <MerchantMark name={item.name} category={item.category} size="sm" />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{item.name}</p>
-                        <p className="text-xs text-muted">{formatCivil(item.nextChargeAt)}</p>
+                upcoming.map((row) => (
+                  <li key={`${row.subscription.id}-${civilToIso(row.chargeAt)}`}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 rounded-xl px-1 py-2 text-left hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                      onClick={() => {
+                        setEditing(row.subscription);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <MerchantMark
+                          name={row.subscription.name}
+                          category={row.subscription.category}
+                          size="sm"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{row.subscription.name}</p>
+                          <p className="text-xs text-muted">{formatCivil(row.chargeAt)}</p>
+                          <p className="text-xs text-muted">
+                            {reminderSentCopy(row.subscription.lastReminderSentAt, settings.timezone)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-sm tabular-nums">
-                      {formatMinor(item.amount, item.currency)}
-                    </p>
+                      <p className="text-sm tabular-nums">
+                        {formatMinor(row.subscription.amount, row.subscription.currency)}
+                      </p>
+                    </button>
                   </li>
                 ))
               )}
@@ -602,8 +619,11 @@ export function TrackerApp({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 tabular-nums text-muted">
-                      {formatCivil(item.nextChargeAt)}
+                    <td className="px-4 py-3 text-muted">
+                      <p className="tabular-nums">{formatCivil(item.nextChargeAt)}</p>
+                      <p className="text-xs">
+                        {reminderSentCopy(item.lastReminderSentAt, settings.timezone)}
+                      </p>
                     </td>
                     <td className="px-4 py-3">
                       <span

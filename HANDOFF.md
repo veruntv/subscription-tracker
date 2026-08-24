@@ -75,9 +75,9 @@ Pale lilac canvas `#F4EFF7`, grape sidebar `#44355B`, lime accent **only** `#D6F
 
 ## What to do next
 
-Reminder visibility in the UI — the email already goes out; the list does not show that it went. Do not add partner sharing or live FX.
+See-the-reminder slice (Linear project, branch `vernovicova/see-the-reminder`): last sent on the row, Resend retry, batched same-day same-N mail, Upcoming = 30 days, click Upcoming to edit. Do not add partner sharing or live FX.
 
-Optional later: nicer domain in Coolify + Namecheap A record.
+Optional later: nicer domain in Coolify + Namecheap A record. CSV export/import and charge history stay in Backlog.
 
 ## Pitfalls already paid for
 

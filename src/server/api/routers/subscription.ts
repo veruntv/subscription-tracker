@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, max } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -7,7 +7,7 @@ import { applyStatus, buildSubscription } from "~/lib/domain/subscription";
 import { CADENCES, CATEGORIES } from "~/lib/domain/types";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import { subscriptions, users } from "~/server/db/schema";
+import { notifications, subscriptions, users } from "~/server/db/schema";
 import { civilToTimestamp, rowToSubscription } from "~/server/subscriptions/map";
 
 const civilSchema = z.object({
@@ -43,7 +43,25 @@ export const subscriptionRouter = createTRPCRouter({
       .select()
       .from(subscriptions)
       .where(eq(subscriptions.userId, ctx.session.user.id));
-    return rows.map(rowToSubscription);
+    const sentRows =
+      rows.length === 0
+        ? []
+        : await ctx.db
+            .select({
+              subscriptionId: notifications.subscriptionId,
+              sentAt: max(notifications.sentAt),
+            })
+            .from(notifications)
+            .innerJoin(subscriptions, eq(subscriptions.id, notifications.subscriptionId))
+            .where(eq(subscriptions.userId, ctx.session.user.id))
+            .groupBy(notifications.subscriptionId);
+    const latest = new Map(
+      sentRows.map((row) => [row.subscriptionId, row.sentAt?.toISOString() ?? null]),
+    );
+    return rows.map((row) => ({
+      ...rowToSubscription(row),
+      lastReminderSentAt: latest.get(row.id) ?? null,
+    }));
   }),
 
   create: protectedProcedure.input(inputSchema).mutation(async ({ ctx, input }) => {

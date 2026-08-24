@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { civilToIso } from "~/lib/domain/civil-date";
-import { nextChargeOnOrAfter, occurrencesInMonth } from "~/lib/domain/schedule";
+import { nextChargeOnOrAfter, occurrencesInMonth, occurrencesThrough } from "~/lib/domain/schedule";
 
 describe("nextChargeOnOrAfter", () => {
   it("keeps a 31st anchor through February", () => {
@@ -78,5 +78,28 @@ describe("occurrencesInMonth", () => {
       2,
     );
     expect(dates).toEqual([]);
+  });
+});
+
+describe("occurrencesThrough", () => {
+  it("walks weekly dates through a 30-day window", () => {
+    const dates = occurrencesThrough(
+      {
+        startedAt: { year: 2026, month: 8, day: 24 },
+        cadence: "weekly",
+        intervalCount: 1,
+        anchorDay: 1,
+        status: "active",
+      },
+      { year: 2026, month: 8, day: 24 },
+      { year: 2026, month: 9, day: 23 },
+    );
+    expect(dates.map(civilToIso)).toEqual([
+      "2026-08-24",
+      "2026-08-31",
+      "2026-09-07",
+      "2026-09-14",
+      "2026-09-21",
+    ]);
   });
 });
