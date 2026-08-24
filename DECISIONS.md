@@ -109,7 +109,35 @@ Monthly dashboard figure = yearly / 12.
 
 **Why:** Application-level “did we already send?” checks race. A unique constraint does not.
 
-**Consequences:** The insert must happen in the same logical step as the send claim (insert first, then send; or insert in a transaction you can mark). A failed send after a successful insert will not retry automatically — that is accepted for v1 (ops can delete the row). Do not add a second “sent” flag as a substitute for the unique key.
+**Consequences:** The unique key is still the only duplicate lock. A failed send after insert is no longer accepted — see 2026-08-24. Do not add a second “sent” flag as a substitute for the unique key.
+
+---
+
+## 2026-08-24 — Failed reminder send releases the unique claim
+
+**Status:** accepted (narrows 2026-08-18 unique lock)
+
+**Context:** Insert-then-send meant a non-OK Resend response left the unique row. The next hourly tick skipped the mail. Last-sent UI would have shown a send that never happened.
+
+**Decision:** Claim by inserting `notification`, then send. If Resend returns non-OK or throws, delete those claim rows in the same worker pass. The next hour can insert again. True duplicates still hit the unique key and skip.
+
+**Why:** SUB-21. The unique key should mean “this charge was emailed,” not “we tried once.”
+
+**Consequences:** Overlapping cron ticks can race on insert; the loser skips. Do not roll `nextChargeAt` after send.
+
+---
+
+## 2026-08-24 — One reminder email per user, charge date, and N
+
+**Status:** accepted (narrows SPEC “one email per upcoming charge”)
+
+**Context:** Two subscriptions can charge on the same day with the same `notifyDaysBefore`. Sending one letter per row hid the second charge (Claude went out; the other same-day row did not).
+
+**Decision:** Group due rows by `(userId, charge civil date, notifyDaysBefore)`. One Resend send per group. Body lists every newly claimed row. Already-claimed rows stay out of that send (catch-up for a leftover is a one-item email). Different N stays a different email.
+
+**Why:** The reminder should list every charge that is due to be announced that morning, not only the first name.
+
+**Consequences:** Subject is `{name} charges in N day(s)` for one row, `{count} subscriptions charge in N day(s)` otherwise. Unique key stays per subscription, not per email.
 
 ---
 

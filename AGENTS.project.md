@@ -82,7 +82,7 @@ Canvas #F4EFF7, sidebar #44355B, lime accent only #D6F24C (CTA + today). Mix/ico
 
 \## Next
 
-Reminder visibility in the UI. Emails already send; the list does not show last sent. No partner sharing.
+See-the-reminder slice on `vernovicova/see-the-reminder`. No partner sharing.
 
 \## Pitfalls
 

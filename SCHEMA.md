@@ -54,7 +54,7 @@ When the target month has fewer days than `anchorDay`, that occurrence uses the 
 
 ## `notification`
 
-One row per successfully sent (or claimed) reminder for a given charge date.
+One row per successfully sent reminder for a given charge date. A failed send must not leave this row; the next hourly tick can claim again.
 
 | Column | Type | Constraints | Notes |
 | --- | --- | --- | --- |

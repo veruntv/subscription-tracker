@@ -9,6 +9,7 @@ import {
   totalsByCurrencyForCalendarMonth,
   totalsInCurrency,
   totalsInCurrencyForCalendarMonth,
+  upcomingCharges,
   type CategoryTotals,
 } from "~/lib/domain/totals";
 
@@ -194,5 +195,81 @@ describe("totals converted to default currency", () => {
     const year = totalsInCurrency([apple, rent], "EUR", fx());
     // apple 143.88 EUR/yr; 12000 MDL/yr → 607.06 EUR. monthly = yearly/12
     expect(year).toEqual({ currency: "EUR", monthly: 6258, yearly: 75094 });
+  });
+});
+
+describe("upcomingCharges", () => {
+  const from = { year: 2026, month: 8, day: 24 };
+
+  it("lists each weekly occurrence in the next 30 days", () => {
+    const gym = sub({
+      id: "gym",
+      name: "Gym",
+      amount: 2000,
+      cadence: "weekly",
+      intervalCount: 1,
+      anchorDay: 1,
+      startedAt: { year: 2026, month: 8, day: 24 },
+      nextChargeAt: { year: 2026, month: 8, day: 24 },
+      category: "fitness",
+    });
+    const upcoming = upcomingCharges([gym], from);
+    expect(upcoming.map((row) => row.chargeAt)).toEqual([
+      { year: 2026, month: 8, day: 24 },
+      { year: 2026, month: 8, day: 31 },
+      { year: 2026, month: 9, day: 7 },
+      { year: 2026, month: 9, day: 14 },
+      { year: 2026, month: 9, day: 21 },
+    ]);
+    expect(upcoming.every((row) => row.subscription.id === "gym")).toBe(true);
+  });
+
+  it("includes a charge on the 30th day and skips paused rows", () => {
+    const yearly = sub({
+      id: "domain",
+      name: "Domain",
+      amount: 1200,
+      cadence: "yearly",
+      startedAt: { year: 2026, month: 9, day: 23 },
+      nextChargeAt: { year: 2026, month: 9, day: 23 },
+      category: "hosting",
+    });
+    const paused = sub({
+      id: "paused",
+      name: "Paused",
+      amount: 999,
+      cadence: "weekly",
+      startedAt: { year: 2026, month: 8, day: 24 },
+      nextChargeAt: { year: 2026, month: 8, day: 24 },
+      status: "paused",
+      category: "other",
+    });
+    const upcoming = upcomingCharges([yearly, paused], from);
+    expect(upcoming).toHaveLength(1);
+    expect(upcoming[0]?.subscription.id).toBe("domain");
+    expect(upcoming[0]?.chargeAt).toEqual({ year: 2026, month: 9, day: 23 });
+  });
+
+  it("sorts mixed subscriptions by charge date then name", () => {
+    const netflix = sub({
+      id: "netflix",
+      name: "Netflix",
+      amount: 1299,
+      cadence: "monthly",
+      startedAt: { year: 2026, month: 8, day: 24 },
+      nextChargeAt: { year: 2026, month: 8, day: 24 },
+      category: "streaming",
+    });
+    const apple = sub({
+      id: "apple",
+      name: "Apple",
+      amount: 999,
+      cadence: "monthly",
+      startedAt: { year: 2026, month: 8, day: 24 },
+      nextChargeAt: { year: 2026, month: 8, day: 24 },
+      category: "software",
+    });
+    const upcoming = upcomingCharges([netflix, apple], from);
+    expect(upcoming.map((row) => row.subscription.name)).toEqual(["Apple", "Netflix"]);
   });
 });

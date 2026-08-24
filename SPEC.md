@@ -46,7 +46,7 @@ Editing amount, cadence, interval, or the first-charge date recalculates `nextCh
 
 Signed-in home shows:
 
-- **Next charges** — upcoming active subscriptions, soonest first
+- **Next charges** — actual charge dates in the next 30 days in the user's timezone, soonest first. A weekly row can appear more than once
 - **This calendar month** — sum of actual charge amounts whose charge date falls in the current month (full invoice, not yearly ÷ 12), converted into the user's `defaultCurrency` at today's rate when currencies mix
 - **Yearly total** — normalized spend of all active subscriptions (see table below), same conversion
 - **By category** — both figures, grouped by category, in `defaultCurrency` when converting
@@ -73,13 +73,13 @@ Charge dates on the calendar use the same schedule rules as `nextChargeAt` (incl
 
 ### Reminder email
 
-- One email per upcoming charge, sent N days before `nextChargeAt`
-- N is `notifyDaysBefore` on the subscription
-- Sent at **09:00 in the user's IANA timezone**
-- A Vercel Cron job runs hourly, finds users whose local time is currently 09:00, and sends due reminders
-- Delivery is recorded in `notification` so retries cannot double-send
+- Sent N days before `nextChargeAt`. N is `notifyDaysBefore` on the subscription
+- Subscriptions that share a user, charge date, and N go in **one** email. Different N still means separate emails
+- Sent at **09:00 in the user's IANA timezone** (hourly cron still catch-up later that local morning)
+- A Coolify Cron job runs hourly, finds users whose local time is currently 09:00 or later on the reminder civil date, and sends due reminders
+- Delivery is recorded in `notification` so retries cannot double-send. A failed send does not leave a claim
 
-Email contains: subscription name, amount + currency, charge date, and the cancel URL when present. Provider: Resend.
+Email contains each subscription's name, amount + currency, charge date, and the cancel URL when present. Subject is `{name} charges in N day(s)` for one row, `{count} subscriptions charge in N day(s)` for two or more. Provider: Resend.
 
 ### Marketing landing
 
@@ -119,7 +119,7 @@ Email contains: subscription name, amount + currency, charge date, and the cance
 - Create, edit, pause, resume, cancel, and delete a subscription
 - Dashboard monthly / yearly / category numbers match the normalization rules
 - Calendar shows the next month of charges, including 31st-anchor collapse
-- A user with timezone `Europe/Chisinau` and `notifyDaysBefore = 3` gets one email at local 09:00, three days before the charge
+- A user with timezone `Europe/Chisinau` and `notifyDaysBefore = 3` gets mail at local 09:00, three days before the charge. Two active rows with the same charge date and N share that email
 - Retrying the cron does not send a second email for the same `(subscription, charge date)`
 - Signed-out visitors see the landing page; the tracker is only after sign-in
 - Layout is designed for a desktop browser (dashboard + calendar side by side is fine). A phone or tablet stacks the same screens and must not overflow sideways except the calendar grid, which may scroll horizontally

@@ -1,9 +1,14 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { env } from "~/env";
-import { civilToIso, compareCivil, todayInZone } from "~/lib/domain/civil-date";
-import { formatMinor } from "~/lib/domain/money";
-import { isDueThisHour, isUniqueViolation, reminderIdempotencyKey } from "~/lib/domain/reminders";
+import { compareCivil, todayInZone } from "~/lib/domain/civil-date";
+import {
+  deliverReminderBatch,
+  groupDueReminders,
+  isDueThisHour,
+  isUniqueViolation,
+  type DueReminder,
+} from "~/lib/domain/reminders";
 import { rollNextChargeIfPast } from "~/lib/domain/subscription";
 import { db } from "~/server/db";
 import { notifications, subscriptions, users } from "~/server/db/schema";
@@ -31,10 +36,11 @@ export async function runReminders(now = new Date()): Promise<{
 
   let sent = 0;
   let skipped = 0;
+  const due: DueReminder[] = [];
 
   for (const row of rows) {
     const subscription = rowToSubscription(row.subscription);
-    const due = isDueThisHour({
+    const isDue = isDueThisHour({
       subscription,
       settings: {
         timezone: row.timezone,
@@ -42,54 +48,81 @@ export async function runReminders(now = new Date()): Promise<{
       },
       now,
     });
-    if (!due) {
+    if (!isDue) {
       skipped += 1;
       continue;
     }
+    due.push({
+      userId: row.subscription.userId,
+      email: row.email,
+      subscription,
+    });
+  }
 
-    const key = reminderIdempotencyKey(subscription);
-    try {
-      await db.insert(notifications).values({
-        subscriptionId: key.subscriptionId,
-        forChargeDate: key.forChargeDate,
-      });
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        skipped += 1;
-        continue;
-      }
-      throw error;
+  const resendKey = env.AUTH_RESEND_KEY;
+  const emailFrom = env.EMAIL_FROM;
+
+  for (const group of groupDueReminders(due)) {
+    if (!resendKey || !emailFrom || !group.email) {
+      skipped += group.subscriptions.length;
+      continue;
     }
 
-    if (env.AUTH_RESEND_KEY && env.EMAIL_FROM && row.email) {
-      try {
-        const chargeDate = civilToIso(subscription.nextChargeAt);
-        const amount = formatMinor(subscription.amount, subscription.currency);
-        const cancel = subscription.cancelUrl
-          ? `\nManage / cancel: ${subscription.cancelUrl}`
-          : "";
-        const response = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${env.AUTH_RESEND_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: env.EMAIL_FROM,
-            to: [row.email],
-            subject: `${subscription.name} charges in ${subscription.notifyDaysBefore} day(s)`,
-            text: `${subscription.name} · ${amount} on ${chargeDate}.${cancel}`,
-          }),
-        });
-        if (!response.ok) {
-          console.error("Resend rejected reminder", response.status, subscription.id);
+    const result = await deliverReminderBatch({
+      items: group.subscriptions,
+      to: group.email,
+      claim: async (key) => {
+        try {
+          await db.insert(notifications).values({
+            subscriptionId: key.subscriptionId,
+            forChargeDate: key.forChargeDate,
+          });
+          return "inserted";
+        } catch (error) {
+          if (isUniqueViolation(error)) return "duplicate";
+          throw error;
         }
-      } catch (error) {
-        console.error("Resend failed for reminder", subscription.id, error);
-      }
-    }
-
-    sent += 1;
+      },
+      release: async (keys) => {
+        for (const key of keys) {
+          await db
+            .delete(notifications)
+            .where(
+              and(
+                eq(notifications.subscriptionId, key.subscriptionId),
+                eq(notifications.forChargeDate, key.forChargeDate),
+              ),
+            );
+        }
+      },
+      send: async (message) => {
+        try {
+          const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: emailFrom,
+              to: [message.to],
+              subject: message.subject,
+              text: message.text,
+            }),
+          });
+          if (!response.ok) {
+            console.error("Resend rejected reminder", response.status, message.subject);
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error("Resend failed for reminder", message.subject, error);
+          return false;
+        }
+      },
+    });
+    sent += result.sent;
+    skipped += result.skipped;
   }
 
   for (const row of rows) {

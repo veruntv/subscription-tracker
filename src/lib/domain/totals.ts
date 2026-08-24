@@ -1,7 +1,8 @@
+import { addDays, compareCivil } from "~/lib/domain/civil-date";
 import { convertMinor, type FxTable } from "~/lib/domain/fx";
-import { occurrencesInMonth } from "~/lib/domain/schedule";
+import { occurrencesInMonth, occurrencesThrough } from "~/lib/domain/schedule";
 import { mulDivRound, yearlyMinor } from "~/lib/domain/money";
-import type { Category, Subscription } from "~/lib/domain/types";
+import type { Category, CivilDate, Subscription } from "~/lib/domain/types";
 
 export type CurrencyTotals = {
   currency: string;
@@ -199,18 +200,27 @@ export function totalsByCategoryInCurrencyForCalendarMonth(
     .sort((a, b) => b.yearly - a.yearly);
 }
 
+export type UpcomingOccurrence = {
+  subscription: Subscription;
+  chargeAt: CivilDate;
+};
+
 export function upcomingCharges(
   items: readonly Subscription[],
-  limit = 8,
-): Subscription[] {
-  return activeSubscriptions(items)
-    .slice()
-    .sort((a, b) => {
-      const byDate =
-        a.nextChargeAt.year - b.nextChargeAt.year ||
-        a.nextChargeAt.month - b.nextChargeAt.month ||
-        a.nextChargeAt.day - b.nextChargeAt.day;
-      return byDate || a.name.localeCompare(b.name);
-    })
-    .slice(0, limit);
+  from: CivilDate,
+  horizonDays = 30,
+): UpcomingOccurrence[] {
+  const until = addDays(from, horizonDays);
+  const rows: UpcomingOccurrence[] = [];
+  for (const subscription of activeSubscriptions(items)) {
+    for (const chargeAt of occurrencesThrough(subscription, from, until)) {
+      rows.push({ subscription, chargeAt });
+    }
+  }
+  return rows.sort(
+    (a, b) =>
+      compareCivil(a.chargeAt, b.chargeAt) ||
+      a.subscription.name.localeCompare(b.subscription.name) ||
+      a.subscription.id.localeCompare(b.subscription.id),
+  );
 }

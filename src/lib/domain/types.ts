@@ -37,6 +37,7 @@ export type Subscription = {
   category: Category;
   cancelUrl: string | null;
   createdAt: string;
+  lastReminderSentAt?: string | null;
 };
 
 export type UserSettings = {

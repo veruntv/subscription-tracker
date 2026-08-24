@@ -90,3 +90,36 @@ export function occurrencesInMonth(
 
   return dates;
 }
+
+export function occurrencesThrough(
+  subscription: Pick<
+    Subscription,
+    "startedAt" | "cadence" | "intervalCount" | "anchorDay" | "status"
+  >,
+  from: CivilDate,
+  until: CivilDate,
+): CivilDate[] {
+  if (subscription.status !== "active") return [];
+
+  const dates: CivilDate[] = [];
+  let cursor = nextChargeOnOrAfter({
+    startedAt: subscription.startedAt,
+    cadence: subscription.cadence,
+    intervalCount: subscription.intervalCount,
+    anchorDay: subscription.anchorDay,
+    from,
+  });
+
+  while (compareCivil(cursor, until) <= 0) {
+    dates.push(cursor);
+    cursor = nextChargeOnOrAfter({
+      startedAt: subscription.startedAt,
+      cadence: subscription.cadence,
+      intervalCount: subscription.intervalCount,
+      anchorDay: subscription.anchorDay,
+      from: addDays(cursor, 1),
+    });
+  }
+
+  return dates;
+}
