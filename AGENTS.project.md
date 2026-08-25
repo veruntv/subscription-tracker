@@ -74,7 +74,7 @@ Tables already pushed: npx drizzle-kit push --force in the application Terminal.
 
 \- src/lib/domain/ — schedule 31st rule, integer money, totals weekly×52 monthly×12 quarterly×4 yearly×1
 
-\- src/app/api/cron/reminders/route.ts — Bearer CRON_SECRET, 09:00 user-local
+\- src/app/api/cron/reminders/route.ts — Bearer CRON_SECRET, hourly at user.notifyHour
 
 \## Design (do not revert)
 

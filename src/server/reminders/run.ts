@@ -28,6 +28,7 @@ export async function runReminders(now = new Date()): Promise<{
       subscription: subscriptions,
       timezone: users.timezone,
       defaultCurrency: users.defaultCurrency,
+      notifyHour: users.notifyHour,
       email: users.email,
     })
     .from(subscriptions)
@@ -45,6 +46,7 @@ export async function runReminders(now = new Date()): Promise<{
       settings: {
         timezone: row.timezone,
         defaultCurrency: row.defaultCurrency,
+        notifyHour: row.notifyHour,
       },
       now,
     });

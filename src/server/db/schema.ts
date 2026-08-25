@@ -13,6 +13,7 @@ export const users = pgTable("user", (d) => ({
   image: d.varchar({ length: 255 }),
   timezone: d.varchar({ length: 64 }).notNull().default("UTC"),
   defaultCurrency: d.char({ length: 3 }).notNull().default("USD"),
+  notifyHour: d.integer().notNull().default(9),
   createdAt: d
     .timestamp({ withTimezone: true })
     .notNull()

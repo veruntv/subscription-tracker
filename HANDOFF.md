@@ -57,7 +57,7 @@ Tables were applied: `npx drizzle-kit push --force` inside the **application** T
 - `src/app/login/page.tsx` — email → `signIn("resend")`. Success replaces the form with **Check your email**. Generic red copy if Resend errors (including unverified domain)
 - `src/lib/domain/` — schedule (`anchorDay` 31st rule), money as integer minor units, FX convert via 1e8 scaled rates, totals (weekly×52, monthly×12, quarterly×4, yearly×1), `categoryMix`
 - `src/server/fx/rates.ts` — daily USD quotes from `open.er-api.com`, in-process cache by UTC date
-- `src/app/api/cron/reminders/route.ts` — Bearer `CRON_SECRET`, hourly 09:00 user-local
+- `src/app/api/cron/reminders/route.ts` — Bearer `CRON_SECRET`, hourly; send at `user.notifyHour` plus one hour of catch-up
 
 ## Design (do not revert)
 

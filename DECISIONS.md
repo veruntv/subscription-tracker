@@ -95,7 +95,21 @@ Monthly dashboard figure = yearly / 12.
 
 **Why:** One worker, no per-user schedulers. Storing local civil times without a zone is how dates shift under DST. Hourly is enough for “9am local” and matches Vercel Cron.
 
-**Consequences:** Reminder logic is: local date of `nextChargeAt` minus `notifyDaysBefore` == today's local date, and local hour == 9. DST spring-forward / fall-back needs tests. Do not schedule a single daily cron at a fixed UTC hour.
+**Consequences:** DST spring-forward / fall-back needs tests. Do not schedule a single daily cron at a fixed UTC hour. The 09:00 hour and “all morning” catch-up are narrowed in 2026-08-25.
+
+---
+
+## 2026-08-25 — Notify hour is global; window is one hour
+
+**Status:** accepted (narrows 2026-08-18 local 09:00)
+
+**Context:** `hour >= 9` on the reminder civil date emailed a subscription created at 23:00 the same day. Per-subscription send times would split one morning into many letters.
+
+**Decision:** Store `notifyHour` on `user` (default 9). Send only at that local hour, plus the next hour for a missed cron. Eligible if reminder date ≤ today and `nextChargeAt` ≥ today. Do not put a time on the subscription form.
+
+**Why:** One hour per person. Adding several rows after the window waits until the next slot, so onboarding does not drip mail. A charge that is already today, added at night, is visible in Upcoming only.
+
+**Consequences:** Coolify still runs hourly. After deploy, `db:push` adds `user.notifyHour`. Existing rows get 9.
 
 ---
 

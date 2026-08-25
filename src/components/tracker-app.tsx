@@ -28,6 +28,8 @@ import {
   CURRENCIES,
   STATUS_LABELS,
   TIMEZONES,
+  NOTIFY_HOURS,
+  formatNotifyHour,
   greetingForHour,
   OVERVIEW_HERO_CAPTION,
 } from "~/lib/domain/labels";
@@ -159,6 +161,7 @@ export function TrackerApp({
   const settings: UserSettings = {
     timezone: settingsQuery.data?.timezone ?? "UTC",
     defaultCurrency: settingsQuery.data?.defaultCurrency ?? "USD",
+    notifyHour: settingsQuery.data?.notifyHour ?? 9,
   };
   const needsOnboarding =
     Boolean(settingsQuery.data) &&
@@ -277,6 +280,7 @@ export function TrackerApp({
     settingsMut.mutate({
       timezone: next.timezone as (typeof TIMEZONES)[number],
       defaultCurrency: next.defaultCurrency as (typeof CURRENCIES)[number],
+      notifyHour: next.notifyHour,
     });
   };
 
@@ -725,7 +729,11 @@ export function TrackerApp({
         <SettingsDialog
           settings={
             needsOnboarding
-              ? { timezone: suggestedTimezone(), defaultCurrency: settings.defaultCurrency }
+              ? {
+                  timezone: suggestedTimezone(),
+                  defaultCurrency: settings.defaultCurrency,
+                  notifyHour: settings.notifyHour,
+                }
               : settings
           }
           required={needsOnboarding}
@@ -793,6 +801,7 @@ function SettingsDialog({
 }) {
   const [timezone, setTimezone] = useState(settings.timezone);
   const [defaultCurrency, setDefaultCurrency] = useState(settings.defaultCurrency);
+  const [notifyHour, setNotifyHour] = useState(settings.notifyHour);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4 sm:p-8">
@@ -802,7 +811,7 @@ function SettingsDialog({
         </h2>
         {required ? (
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            Reminders go out at 09:00 in this zone. Totals convert into this currency.
+            Reminders go out at this hour in this zone. Totals convert into this currency.
           </p>
         ) : null}
         <div className="mt-5 space-y-4">
@@ -819,6 +828,24 @@ function SettingsDialog({
                 </option>
               ))}
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="notify-hour">Reminders at</Label>
+            <Select
+              id="notify-hour"
+              value={String(notifyHour)}
+              onChange={(event) => setNotifyHour(Number(event.target.value))}
+            >
+              {NOTIFY_HOURS.map((hour) => (
+                <option key={hour} value={hour}>
+                  {formatNotifyHour(hour)}
+                </option>
+              ))}
+            </Select>
+            <p className="text-xs leading-relaxed text-muted">
+              One email at this hour, a few days before each charge. Adding a
+              subscription after this hour waits until the next morning.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="default-currency">Default currency</Label>
@@ -841,7 +868,7 @@ function SettingsDialog({
               Close
             </Button>
           )}
-          <Button onClick={() => onSave({ timezone, defaultCurrency })}>Save</Button>
+          <Button onClick={() => onSave({ timezone, defaultCurrency, notifyHour })}>Save</Button>
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ Auth.js user row, extended.
 | `image` | `text` | nullable | Auth.js |
 | `timezone` | `text` | not null, default `'UTC'` | IANA name, e.g. `Europe/Chisinau` |
 | `defaultCurrency` | `char(3)` | not null, default `'USD'` | ISO 4217 |
+| `notifyHour` | `integer` | not null, default `9`, 0–23 | Local hour to send reminder mail |
 | `createdAt` | `timestamptz` | not null, default `now()` | |
 
 Auth.js also creates `account`, `session`, and `verificationToken` (names follow the Auth.js Postgres adapter). Do not put application data there.
@@ -78,7 +79,7 @@ The unique index on `(subscriptionId, forChargeDate)` is the only guard against 
 Cron shape (not a stored index, but the query the indexes exist for):
 
 - active subscriptions whose reminder window contains “now”
-- join user, filter `timezone` so local time is 09:00
+- join user, filter so local hour is `notifyHour` or the next hour
 - insert `notification` first; unique violation → skip send
 
 ## Relationships
