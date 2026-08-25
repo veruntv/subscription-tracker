@@ -42,6 +42,12 @@ export const STATUS_LABELS: Record<Status, string> = {
 
 export const CURRENCIES = ["EUR", "USD", "GBP", "MDL", "RON", "PLN", "CHF", "JPY"] as const;
 
+export const NOTIFY_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
+
+export function formatNotifyHour(hour: number): string {
+  return `${String(hour).padStart(2, "0")}:00`;
+}
+
 export const TIMEZONES = [
   "Europe/Chisinau",
   "Europe/Bucharest",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CATEGORY_TONES, OVERVIEW_HERO_CAPTION, categoryTone } from "~/lib/domain/labels";
+import { CATEGORY_TONES, OVERVIEW_HERO_CAPTION, categoryTone, formatNotifyHour } from "~/lib/domain/labels";
 import { CATEGORIES } from "~/lib/domain/types";
 
 describe("category tones", () => {
@@ -11,6 +11,13 @@ describe("category tones", () => {
 
   it("maps remainder to other", () => {
     expect(categoryTone("remainder")).toEqual(CATEGORY_TONES.other);
+  });
+});
+
+describe("formatNotifyHour", () => {
+  it("pads a single-digit hour", () => {
+    expect(formatNotifyHour(9)).toBe("09:00");
+    expect(formatNotifyHour(18)).toBe("18:00");
   });
 });
 

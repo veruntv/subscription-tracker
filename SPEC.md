@@ -75,8 +75,9 @@ Charge dates on the calendar use the same schedule rules as `nextChargeAt` (incl
 
 - Sent N days before `nextChargeAt`. N is `notifyDaysBefore` on the subscription
 - Subscriptions that share a user, charge date, and N go in **one** email. Different N still means separate emails
-- Sent at **09:00 in the user's IANA timezone** (hourly cron still catch-up later that local morning)
-- A Coolify Cron job runs hourly, finds users whose local time is currently 09:00 or later on the reminder civil date, and sends due reminders
+- Sent at the user's **`notifyHour`** (0–23, default 09:00) in their IANA timezone. The next local hour is catch-up for a missed cron tick. Not all evening
+- Eligible while reminder date ≤ today and `nextChargeAt` ≥ today. A row added after today's window waits for the next slot. A charge that is already today, added at night, gets no mail
+- A Coolify Cron job runs hourly
 - Delivery is recorded in `notification` so retries cannot double-send. A failed send does not leave a claim
 
 Email contains each subscription's name, amount + currency, charge date, and the cancel URL when present. Subject is `{name} charges in N day(s)` for one row, `{count} subscriptions charge in N day(s)` for two or more. Provider: Resend.
@@ -96,6 +97,7 @@ Email contains each subscription's name, amount + currency, charge date, and the
 ### Settings (v1)
 
 - Timezone (IANA)
+- Reminder hour (`notifyHour`, 0–23, default 9). Not per-subscription
 - Default currency (ISO 4217)
 - Per-subscription `notifyDaysBefore` (not a single global N)
 
@@ -119,7 +121,7 @@ Email contains each subscription's name, amount + currency, charge date, and the
 - Create, edit, pause, resume, cancel, and delete a subscription
 - Dashboard monthly / yearly / category numbers match the normalization rules
 - Calendar shows the next month of charges, including 31st-anchor collapse
-- A user with timezone `Europe/Chisinau` and `notifyDaysBefore = 3` gets mail at local 09:00, three days before the charge. Two active rows with the same charge date and N share that email
+- A user with timezone `Europe/Chisinau`, `notifyHour = 9`, and `notifyDaysBefore = 3` gets mail at local 09:00 (or 10:00 if that tick was missed), three days before the charge. Creating the row at 23:00 that day does not send. Two active rows with the same charge date and N share that email
 - Retrying the cron does not send a second email for the same `(subscription, charge date)`
 - Signed-out visitors see the landing page; the tracker is only after sign-in
 - Layout is designed for a desktop browser (dashboard + calendar side by side is fine). A phone or tablet stacks the same screens and must not overflow sideways except the calendar grid, which may scroll horizontally

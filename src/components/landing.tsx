@@ -61,7 +61,7 @@ export function Landing() {
           <Step
             n="03"
             title="Get a reminder"
-            body="One email at 9:00 in your timezone, a few days before the charge."
+            body="One email at the hour you pick, a few days before the charge."
           />
         </section>
 

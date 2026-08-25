@@ -35,40 +35,40 @@ describe("reminderCivilDate", () => {
   });
 });
 
+const chisinau = {
+  timezone: "Europe/Chisinau",
+  defaultCurrency: "EUR",
+  notifyHour: 9,
+} as const;
+
 describe("isDueThisHour", () => {
   it("fires at 09:00 Europe/Chisinau on the reminder day", () => {
     // 06:00 UTC is 09:00 in Chisinau (EEST, UTC+3) in August
     const now = new Date("2026-08-17T06:00:00.000Z");
-    expect(
-      isDueThisHour({
-        subscription: base,
-        settings: { timezone: "Europe/Chisinau", defaultCurrency: "EUR" },
-        now,
-      }),
-    ).toBe(true);
+    expect(isDueThisHour({ subscription: base, settings: chisinau, now })).toBe(true);
   });
 
-  it("does not fire before 09:00 local", () => {
+  it("does not fire before the notify hour", () => {
     const now = new Date("2026-08-17T05:00:00.000Z");
-    expect(
-      isDueThisHour({
-        subscription: base,
-        settings: { timezone: "Europe/Chisinau", defaultCurrency: "EUR" },
-        now,
-      }),
-    ).toBe(false);
+    expect(isDueThisHour({ subscription: base, settings: chisinau, now })).toBe(false);
   });
 
-  it("still fires later the same local morning if the 09:00 tick was missed", () => {
+  it("still fires one hour later if the notify-hour tick was missed", () => {
     // 07:00 UTC is 10:00 in Chisinau (EEST, UTC+3) in August
     const now = new Date("2026-08-17T07:00:00.000Z");
-    expect(
-      isDueThisHour({
-        subscription: base,
-        settings: { timezone: "Europe/Chisinau", defaultCurrency: "EUR" },
-        now,
-      }),
-    ).toBe(true);
+    expect(isDueThisHour({ subscription: base, settings: chisinau, now })).toBe(true);
+  });
+
+  it("does not fire at 23:00 on the reminder day", () => {
+    // 20:00 UTC is 23:00 in Chisinau (EEST, UTC+3) in August
+    const now = new Date("2026-08-17T20:00:00.000Z");
+    expect(isDueThisHour({ subscription: base, settings: chisinau, now })).toBe(false);
+  });
+
+  it("does not fire two hours after the notify hour", () => {
+    // 08:00 UTC is 11:00 in Chisinau (EEST, UTC+3) in August
+    const now = new Date("2026-08-17T08:00:00.000Z");
+    expect(isDueThisHour({ subscription: base, settings: chisinau, now })).toBe(false);
   });
 
   it("does not fire for paused subscriptions", () => {
@@ -76,19 +76,37 @@ describe("isDueThisHour", () => {
     expect(
       isDueThisHour({
         subscription: { ...base, status: "paused" },
-        settings: { timezone: "Europe/Chisinau", defaultCurrency: "EUR" },
+        settings: chisinau,
         now,
       }),
     ).toBe(false);
   });
 
-  it("does not fire the next local day", () => {
+  it("fires the next morning if the reminder day was missed and the charge is still ahead", () => {
     const now = new Date("2026-08-18T06:00:00.000Z");
+    expect(isDueThisHour({ subscription: base, settings: chisinau, now })).toBe(true);
+  });
+
+  it("does not fire after the charge date", () => {
+    const now = new Date("2026-08-21T06:00:00.000Z");
+    expect(isDueThisHour({ subscription: base, settings: chisinau, now })).toBe(false);
+  });
+
+  it("fires at the user's notify hour, not 09:00", () => {
+    const evening = { ...chisinau, notifyHour: 18 };
+    // 15:00 UTC is 18:00 in Chisinau (EEST, UTC+3) in August
     expect(
       isDueThisHour({
         subscription: base,
-        settings: { timezone: "Europe/Chisinau", defaultCurrency: "EUR" },
-        now,
+        settings: evening,
+        now: new Date("2026-08-17T15:00:00.000Z"),
+      }),
+    ).toBe(true);
+    expect(
+      isDueThisHour({
+        subscription: base,
+        settings: evening,
+        now: new Date("2026-08-17T06:00:00.000Z"),
       }),
     ).toBe(false);
   });

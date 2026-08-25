@@ -43,6 +43,7 @@ export type Subscription = {
 export type UserSettings = {
   timezone: string;
   defaultCurrency: string;
+  notifyHour: number;
 };
 
 export type SubscriptionInput = {

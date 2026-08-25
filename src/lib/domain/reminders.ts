@@ -25,6 +25,16 @@ export function reminderCivilDate(subscription: Subscription): CivilDate {
   return addDays(subscription.nextChargeAt, -subscription.notifyDaysBefore);
 }
 
+export function clampNotifyHour(hour: number | undefined | null): number {
+  if (hour == null || !Number.isInteger(hour) || hour < 0 || hour > 23) return 9;
+  return hour;
+}
+
+export function isNotifyWindow(localHour: number, notifyHour: number): boolean {
+  const start = clampNotifyHour(notifyHour);
+  return localHour === start || localHour === (start + 1) % 24;
+}
+
 export function isDueThisHour(input: {
   subscription: Subscription;
   settings: UserSettings;
@@ -47,9 +57,12 @@ export function isDueThisHour(input: {
   const day = Number(local.find((part) => part.type === "day")?.value);
   const hour = Number(local.find((part) => part.type === "hour")?.value);
   if (!year || !month || !day || Number.isNaN(hour)) return false;
-  if (hour < 9) return false;
+  if (!isNotifyWindow(hour, settings.notifyHour)) return false;
 
-  return compareCivil(reminderCivilDate(subscription), { year, month, day }) === 0;
+  const today = { year, month, day };
+  if (compareCivil(reminderCivilDate(subscription), today) > 0) return false;
+  if (compareCivil(subscription.nextChargeAt, today) < 0) return false;
+  return true;
 }
 
 export function isUniqueViolation(error: unknown): boolean {
