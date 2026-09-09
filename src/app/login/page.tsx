@@ -130,6 +130,11 @@ function LoginForm() {
             </form>
           </>
         )}
+        <p className="mt-10">
+          <Link href="/privacy" className="text-sm text-muted underline-offset-4 hover:underline">
+            Privacy
+          </Link>
+        </p>
       </div>
     </main>
   );

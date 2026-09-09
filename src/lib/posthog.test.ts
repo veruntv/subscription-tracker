@@ -36,7 +36,24 @@ describe("posthogInitOptions", () => {
     expect(options.capture_pageview).toBe(true);
     expect(options.autocapture).toBe(true);
     expect(options.disable_session_recording).toBe(true);
+    expect(options.enable_heatmaps).toBe(false);
+    expect(options.persistence).toBe("memory");
     expect(options.person_profiles).toBe("identified_only");
     expect(options.api_host).toBe(POSTHOG_EU_HOST);
+  });
+
+  it("enables recording and cookies only after accept", () => {
+    const options = posthogInitOptions(undefined, "accepted");
+    expect(options.disable_session_recording).toBe(false);
+    expect(options.enable_heatmaps).toBe(true);
+    expect(options.persistence).toBe("localStorage+cookie");
+    expect(options.session_recording.maskAllInputs).toBe(true);
+  });
+
+  it("keeps reject cookieless", () => {
+    const options = posthogInitOptions(undefined, "rejected");
+    expect(options.disable_session_recording).toBe(true);
+    expect(options.enable_heatmaps).toBe(false);
+    expect(options.persistence).toBe("memory");
   });
 });
