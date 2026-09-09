@@ -100,7 +100,7 @@ export function Landing() {
       </main>
       <footer className="mx-auto max-w-6xl px-4 pb-28 sm:px-10">
         <Link href="/privacy" className="text-sm text-muted underline-offset-4 hover:underline">
-          Privacy
+          Privacy policy
         </Link>
       </footer>
     </div>
