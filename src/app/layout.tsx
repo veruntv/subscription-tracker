@@ -4,6 +4,7 @@ import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { CookieBanner } from "~/components/cookie-banner";
 import { PostHogProvider } from "~/components/posthog-provider";
 import { PreviewHostBridge } from "~/components/preview-host-bridge";
 import { TRPCReactProvider } from "~/trpc/react";
@@ -40,6 +41,7 @@ export default function RootLayout({
         <PreviewHostBridge />
         <PostHogProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>
+          <CookieBanner />
         </PostHogProvider>
       </body>
     </html>

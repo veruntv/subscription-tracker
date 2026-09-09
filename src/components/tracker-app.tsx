@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
@@ -348,6 +349,12 @@ export function TrackerApp({
             <LogOut />
             Sign out
           </Button>
+          <Link
+            href="/privacy"
+            className="block px-2 pt-2 text-xs text-sidebar-muted underline-offset-4 hover:text-surface hover:underline"
+          >
+            Privacy
+          </Link>
         </div>
       </aside>
 
