@@ -44,8 +44,10 @@ All of these: **Not available during build**, **Available in the container**, th
 | `EMAIL_FROM` | `Subscription Tracker <noreply@vera-automation.online>` once sending is verified. Temporary fallback Resend allows: `Subscription Tracker <beth.t@example.com>` |
 | `CRON_SECRET` | already set |
 | `SKIP_ENV_VALIDATION` | optional `1` |
+| `NEXT_PUBLIC_POSTHOG_KEY` | not set yet (SUB-29). Public `phc_…` key. **Available during build** |
+| `NEXT_PUBLIC_POSTHOG_HOST` | not set yet (SUB-29). `https://eu.i.posthog.com`. **Available during build** |
 
-**Build-time `DATABASE_URL` caused Auth.js error** `Unsupported database type (object)` — keep DB URL off during build.
+**Build-time `DATABASE_URL` caused Auth.js error** `Unsupported database type (object)` — keep DB URL off during build. PostHog `NEXT_PUBLIC_*` keys are the opposite: they must be present at build once SUB-29 is done.
 
 Tables were applied: `npx drizzle-kit push --force` inside the **application** Terminal (not the DB terminal). Schema is in `src/server/db/schema.ts`.
 
@@ -71,13 +73,24 @@ Pale lilac canvas `#F4EFF7`, grape sidebar `#44355B`, lime accent **only** `#D6F
 - Auth.js + Resend wired; domain sending **Verified**. Magic-link login and reminder mail both work.
 - Hourly Coolify cron for `/api/cron/reminders`. Postgres backup on `tracker-db`.
 - Sign out, empty state, first-run timezone/currency, phone/tablet stacked layout.
+- Reminder slice (Linear **See the reminder**, merged to `main`): last sent on the row, Resend retry, batched same-day same-N mail, Upcoming = 30 days, click Upcoming to edit, `notifyHour` in Settings.
 - Git history on `main`. Check `git status` before assuming GitHub is newest.
 
 ## What to do next
 
-See-the-reminder slice (Linear project, branch `vernovicova/see-the-reminder`): last sent on the row, Resend retry, batched same-day same-N mail, Upcoming = 30 days, click Upcoming to edit. Do not add partner sharing or live FX.
+Product analytics: Linear project [See how people use it](https://linear.app/subscription-track/project/see-how-people-use-it-224181d159f1). PostHog Cloud **EU** only. Do not add GA4 or Microsoft Clarity. Do not self-host PostHog on the Hetzner box.
 
-Optional later: nicer domain in Coolify + Namecheap A record. CSV export/import and charge history stay in Backlog.
+Order:
+
+1. [SUB-29](https://linear.app/subscription-track/issue/SUB-29/open-posthog-cloud-eu-and-put-keys-in-coolify) — user: PostHog EU account + Coolify keys (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com`). Those two must be **available during build**.
+2. [SUB-30](https://linear.app/subscription-track/issue/SUB-30/load-posthog-on-landing-login-and-tracker) — load SDK on landing, login, tracker.
+3. [SUB-31](https://linear.app/subscription-track/issue/SUB-31/cookie-consent-before-replay-plus-a-privacy-page) — cookie banner + `/privacy`.
+4. [SUB-32](https://linear.app/subscription-track/issue/SUB-32/record-sessions-and-heatmaps-mask-money-and-email) — replay/heatmaps, mask money and email.
+5. [SUB-33](https://linear.app/subscription-track/issue/SUB-33/track-signup-sign-in-and-subscription-actions) — named events + funnel.
+
+Never send email, name, or subscription amounts to PostHog. Identify by Auth.js `user.id`.
+
+CSV export/import and charge history stay in Backlog. Do not add partner sharing or live FX.
 
 ## Pitfalls already paid for
 

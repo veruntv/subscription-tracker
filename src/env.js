@@ -13,7 +13,10 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
   },
-  client: {},
+  client: {
+    NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+    NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
+  },
   runtimeEnv: {
     AUTH_SECRET: process.env.AUTH_SECRET,
     AUTH_URL: process.env.AUTH_URL,
@@ -22,6 +25,8 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     CRON_SECRET: process.env.CRON_SECRET,
     NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,
