@@ -4,6 +4,7 @@ import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { PostHogProvider } from "~/components/posthog-provider";
 import { PreviewHostBridge } from "~/components/preview-host-bridge";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -37,7 +38,9 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable} antialiased`}>
       <body>
         <PreviewHostBridge />
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <PostHogProvider>
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
