@@ -41,10 +41,10 @@ export function CookieBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-10">
         <p className="max-w-xl text-sm leading-relaxed text-thistle">
-          We use PostHog in the EU to see how the product is used. Session
-          recordings start only if you accept. Email and amounts stay out.{" "}
+          We use tracking cookies to understand how you use the product and help
+          us improve it. If you accept, we may also record your session.{" "}
           <Link href="/privacy" className="text-accent underline-offset-4 hover:underline">
-            Privacy
+            Privacy policy
           </Link>
         </p>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -56,7 +56,7 @@ export function CookieBanner() {
               setChoice("rejected");
             }}
           >
-            Reject
+            Decline cookies
           </Button>
           <Button
             onClick={() => {
@@ -64,7 +64,7 @@ export function CookieBanner() {
               setChoice("accepted");
             }}
           >
-            Accept
+            Accept cookies
           </Button>
         </div>
       </div>

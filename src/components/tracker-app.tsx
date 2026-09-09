@@ -353,7 +353,7 @@ export function TrackerApp({
             href="/privacy"
             className="block px-2 pt-2 text-xs text-sidebar-muted underline-offset-4 hover:text-surface hover:underline"
           >
-            Privacy
+            Privacy policy
           </Link>
         </div>
       </aside>

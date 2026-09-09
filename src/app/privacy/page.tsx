@@ -4,8 +4,9 @@ import Link from "next/link";
 import { Button } from "~/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Privacy — Subscription Tracker",
-  description: "How Subscription Tracker uses PostHog in the EU.",
+  title: "Privacy policy — Subscription Tracker",
+  description:
+    "How Subscription Tracker uses account data and PostHog analytics cookies.",
 };
 
 export default function PrivacyPage() {
@@ -20,32 +21,73 @@ export default function PrivacyPage() {
         </Button>
       </header>
       <main className="mx-auto max-w-3xl px-4 pb-24 sm:px-10">
-        <p className="text-sm text-muted">Privacy</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-          How we look at usage
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          Privacy policy
         </h1>
-        <div className="mt-8 space-y-5 text-sm leading-relaxed text-muted">
-          <p>
-            Subscription Tracker uses <strong className="font-medium text-fg">PostHog Cloud EU</strong>{" "}
-            (Frankfurt) for product analytics and session replay. Events go to{" "}
-            <code className="text-fg">eu.i.posthog.com</code>. We do not use Google Analytics
-            or Microsoft Clarity.
-          </p>
-          <p>
-            Page views can load so we know the product is used. Session recordings and
-            heatmaps start only after you accept analytics cookies on the banner.
-            Reject keeps the app working; we do not record that session, and PostHog
-            does not set a persistent cookie.
-          </p>
-          <p>
-            A signed-in person is identified by an internal user id, never by email
-            or name. Subscription amounts, merchant names, and the email field are
-            not sent as analytics properties. Input fields are masked in recordings.
-          </p>
-          <p>
-            The choice is stored in this browser. Clearing site data for this domain
-            shows the banner again.
-          </p>
+        <p className="mt-2 text-sm text-muted">Last updated 10 September 2026</p>
+
+        <div className="mt-10 space-y-8 text-sm leading-relaxed text-muted">
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold tracking-tight text-fg">Who we are</h2>
+            <p>
+              Subscription Tracker is a web app at vera-automation.online. It keeps
+              the list of recurring charges you add to your account.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold tracking-tight text-fg">Account data</h2>
+            <p>
+              When you sign in we store your email address, timezone, currency
+              preference, and the subscriptions you enter. This stays on our
+              servers in the EU (Hetzner, Falkenstein). We do not sell it and we
+              do not connect to your bank.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold tracking-tight text-fg">
+              Analytics cookies
+            </h2>
+            <p>
+              We use PostHog Cloud EU (Frankfurt) as our analytics provider, to
+              see how people use the product: pages opened, buttons clicked, and
+              — if you accept cookies — session recordings and heatmaps. PostHog
+              is a data processor. That data is stored in the European Union.
+            </p>
+            <p>
+              If you accept cookies, PostHog may set a cookie on your device and
+              remember you as a returning visitor. Form fields in recordings are
+              masked. We do not send your email, name, subscription amounts, or
+              merchant names to PostHog. A signed-in person is a random id, not
+              an email address.
+            </p>
+            <p>
+              If you decline cookies, you can still use the product. We do not
+              record your session, and PostHog does not set a persistent cookie.
+              We may still count page views without storing a cookie.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold tracking-tight text-fg">
+              How long we keep it
+            </h2>
+            <p>
+              Analytics events are kept for up to one year. Session recordings
+              are kept for up to 30 days. Account data stays until you delete
+              the row or the account.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold tracking-tight text-fg">Your choice</h2>
+            <p>
+              On a first visit, a banner asks you to accept or decline analytics
+              cookies. Your choice is stored in this browser. Clear site data
+              for this domain if you want the banner again.
+            </p>
+          </section>
         </div>
       </main>
     </div>
