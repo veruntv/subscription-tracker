@@ -391,3 +391,19 @@ Monthly dashboard figure = yearly / 12.
 
 **Consequences:** Do not convert the amount on a subscription row. Do not pick a “primary” currency for the hero when rates are available. If rates are missing, prefer `defaultCurrency` and still group leftovers by currency. Do not store historical rates per charge in v1.
 
+---
+
+## 2026-08-25 — PostHog Cloud EU is the analytics product
+
+**Status:** accepted
+
+**Context:** The landing and tracker had no analytics. We needed both product numbers (visitors, active users, return frequency, funnel) and frontend behaviour (clicks, heatmaps, session replay). GA4 covers only the first and stores data in the US. Clarity/Hotjar would be a second vendor for heatmaps.
+
+**Decision:** Use **PostHog Cloud EU** (`https://eu.i.posthog.com`) as the only analytics product. Do not add Google Analytics 4 or Microsoft Clarity. Do not self-host PostHog on the Hetzner CPX22.
+
+Identify signed-in people as Auth.js `user.id`. Never send email, name, merchant name, or subscription amounts. Session replay and heatmaps wait for cookie consent. Record the implementation in Linear project **See how people use it** (SUB-29–33).
+
+**Why:** One SDK, EU hosting (Frankfurt) next to the Falkenstein box, free tier is enough at this scale. Switching Cloud region later means a new project and lost history.
+
+**Consequences:** Coolify gets `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST`; those two are available during build. Missing keys must not 500 the landing. Feature flags and A/B tests are not this project.
+

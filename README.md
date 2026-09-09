@@ -12,11 +12,12 @@ Next.js (App Router) · TypeScript · tRPC · Drizzle ORM · Postgres · Auth.js
 
 ## Docs
 
+- [HANDOFF.md](./HANDOFF.md) — live infra, what is done, what to do next
 - [SPEC.md](./SPEC.md) — product scope
 - [SCHEMA.md](./SCHEMA.md) — tables
 - [DECISIONS.md](./DECISIONS.md) — architecture
 - [AGENTS.project.md](./AGENTS.project.md) — conventions
-- [RELEASE.md](./RELEASE.md) — where to click to go live
+- [RELEASE.md](./RELEASE.md) — original go-live checklist (site is already live)
 - [LOCAL.md](./LOCAL.md) — local Postgres and how to run the app on this machine
 
 ## Scripts
